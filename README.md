@@ -17,16 +17,16 @@ This package serves as the official implementation for the paper:
     * **LCV / LSCV:** Robust cross-validation methods.
 
 ## Installation
-```
+```bash
 pip install .
 ```
 For development (editable install):
-```
+```bash
 pip install -e .[dev]
 ```
 
 ## Quickstart
-```
+```python
 import numpy as np
 from beta_kernel import BetaKernelKDE
 import matplotlib.pyplot as plt
@@ -53,11 +53,11 @@ plt.show()
 ```
 
 ## Running Tests
-```
+```bash
 pytest tests/
 ```
 Or use the included helper script if the package is not installed:
-```
+```bash
 python run_tests.py
 ```
 
