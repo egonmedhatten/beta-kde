@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "beta-kernel"
+name = "beta-kde"
 version = "0.1.0"
-description = "Beta Kernel Density Estimation compatible with Scikit-learn"
+description = "Beta Kernel Density Estimation with automatic bandwidth selection, compatible with Scikit-learn"
 readme = "README.md"
 requires-python = ">=3.8"
 authors = [
