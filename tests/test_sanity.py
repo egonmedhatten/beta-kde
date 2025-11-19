@@ -3,7 +3,7 @@ import os
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose
-from beta_kernel.estimator import BetaKDE as NewKDE
+from beta_kde.estimator import BetaKDE as NewKDE
 
 # --- Path Setup ---
 # We need to import the legacy 'KDE.py' from the 'paper_validation' folder

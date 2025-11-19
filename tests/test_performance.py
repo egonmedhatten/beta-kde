@@ -1,7 +1,7 @@
 import time
 import numpy as np
 import pytest
-from beta_kernel.estimator import BetaKDE
+from beta_kde.estimator import BetaKDE
 
 def test_large_sample_performance():
     """

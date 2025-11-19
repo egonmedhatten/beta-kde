@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import warnings
 from scipy.integrate import quad
 from numpy.testing import assert_allclose
-from beta_kernel.estimator import BetaKDE
+from beta_kde.estimator import BetaKDE
 from sklearn.exceptions import NotFittedError, SkipTestWarning
 from sklearn.utils.estimator_checks import check_estimator
 

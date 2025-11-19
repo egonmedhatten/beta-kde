@@ -15,7 +15,7 @@ if src_path not in sys.path:
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import quad
-from beta_kernel.estimator import BetaKDE
+from beta_kde.estimator import BetaKDE
 import time
 
 # --- Plotting Style Setup for Academic Papers ---

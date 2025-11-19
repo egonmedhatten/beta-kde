@@ -13,7 +13,7 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 # --- Imports ---
-from beta_kernel.estimator import BetaKDE as NewKDE
+from beta_kde.estimator import BetaKDE as NewKDE
 
 # Try importing the legacy script. If it's missing, skip these tests.
 try:

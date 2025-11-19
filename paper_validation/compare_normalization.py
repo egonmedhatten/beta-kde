@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.stats import beta
 from scipy.integrate import quad
-from src.beta_kernel.estimator import BetaKDE
+from src.beta_kde.estimator import BetaKDE
 import matplotlib.pyplot as plt
 
 def true_pdf(x, a, b):
