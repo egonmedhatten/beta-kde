@@ -1,20 +1,20 @@
-# Beta Kernel Density Estimation (beta-kernel)
+# Beta Kernel Density Estimation (beta-kde)
 Fast, Boundary-Corrected Density Estimation for [0, 1] Data.
 
-```beta-kernel``` is a Python library for Kernel Density Estimation (KDE) using the Beta kernel approach proposed by Chen (1999). It is designed to be a drop-in replacement for Scikit-learn's density estimators but optimized for bounded data (e.g., probabilities, percentages, rates) where standard Gaussian KDE suffers from boundary bias.
+`beta-kde` is a Python library for Kernel Density Estimation (KDE) using the Beta kernel approach proposed by Chen (1999). It is designed to be a drop-in replacement for Scikit-learn's density estimators but optimized for bounded data (e.g., probabilities, percentages, rates) where standard Gaussian KDE suffers from boundary bias.
+
+This package serves as the official implementation for the paper:
+
+**A Fast, Closed-Form Bandwidth Selector for the Beta Kernel Density Estimator** Johan Hallberg Szabadváry (2025) Submitted to Journal of Computational and Graphical Statistics
 
 ## Features
-* **Boundary Correction:** Eliminates boundary bias at x=0 and x=1 naturally.
 
-* **Scikit-learn API:** Fully compatible with sklearn pipelines and cross-validation.
-
+* **Boundary Correction:** Eliminates boundary bias naturally—no more "leaking" probability mass or artificial hard stops.
+* **Scikit-learn API:** Drop-in replacement for `KernelDensity`, fully compatible with pipelines and cross-validation.
+* **Custom Support:** While optimized for $[0, 1]$ data (probabilities, rates), it supports **any bounded interval** $[a, b]$ (e.g., 0 to 100) via automatic scaling.
 * **Automated Bandwidth Selection:**
-
-    * **MISE Rule:** Fast rule-of-thumb (Chen, 1999).
-
-    * **LCV:** Likelihood Cross-Validation.
-
-    * **LSCV:** Least-Squares Cross-Validation.
+    * **MISE Rule (Proposed):** Fast, $\mathcal{O}(1)$ rule-of-thumb from Szabadváry (2025).
+    * **LCV / LSCV:** Robust cross-validation methods.
 
 ## Installation
 ```
@@ -56,9 +56,14 @@ plt.show()
 ```
 pytest tests/
 ```
+Or use the included helper script if the package is not installed:
+```
+python run_tests.py
+```
 
 ## References 
 * Chen, S. X. (1999). Beta kernel estimators for density functions. Computational Statistics & Data Analysis, 31(2), 131-145.
+* Szabadváry, J. H. (2025). A Fast, Closed-Form Bandwidth Selector for the Beta Kernel Density Estimator. Journal of Computational and Graphical Statistics (Submitted).
 
 ## Citation
 If you use this software in your research, please cite:
