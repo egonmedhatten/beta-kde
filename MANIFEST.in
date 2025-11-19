@@ -1,0 +1,22 @@
+include pyproject.toml
+include README.md
+include LICENSE
+
+# Include package code
+graft src
+
+# Include standard tests
+include tests/test_estimator.py
+
+# EXCLUDE development & research artifacts
+prune paper_validation
+exclude run_tests.py
+exclude tests/test_sanity.py
+exclude tests/test_performance.py
+exclude *.pdf
+exclude *.png
+exclude *.txt
+
+# Cleanup
+global-exclude __pycache__
+global-exclude *.py[cod]
