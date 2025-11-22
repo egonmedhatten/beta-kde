@@ -1,9 +1,16 @@
+import sys
+import os
+
+# Add the ../src directory to Python's path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+src_path = os.path.join(current_dir, '..', 'src')
+sys.path.insert(0, src_path)
+
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import beta
 from sklearn.neighbors import KernelDensity
-from src.beta_kde import BetaKDE
-import os
+from beta_kde import BetaKDE
 
 # Ensure assets directory exists
 os.makedirs("assets", exist_ok=True)
