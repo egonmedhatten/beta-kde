@@ -17,7 +17,7 @@ This package is the official implementation of the paper:
 
 Standard KDEs smooth data blindly, ignoring bounds. `beta-kde` uses asymmetric Beta kernels that naturally adapt their shape near boundaries to prevent leakage.
 
-![Boundary Bias Comparison](assets/comparison.png)
+![Boundary Bias Comparison](https://raw.githubusercontent.com/egonmedhatten/beta-kde/main/assets/comparison.png)
 
 ## 🚀 Key Features
 
