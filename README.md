@@ -61,6 +61,7 @@ plt.show()
 ```
 2. Multivariate Data (Copula)
 For multidimensional data, BetaKDE fits marginals independently and models dependence using a Copula.
+![2D Copula Plot](https://raw.githubusercontent.com/egonmedhatten/beta-kde/main/assets/2d_copula.png)
 ```python
 # Generate correlated 2D data
 X_2d = np.random.rand(200, 2) 
