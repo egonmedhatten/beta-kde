@@ -30,3 +30,9 @@ where = ["src"]
 
 [project.urls]
 "Homepage" = "https://github.com/egonmedhatten/beta-kde"
+
+# --- NEW SECTION ---
+[tool.pytest.ini_options]
+# Always run with coverage for the src/beta_kde package and show missing lines
+addopts = "--cov=src/beta_kde --cov-report=term-missing"
+testpaths = ["tests"]
