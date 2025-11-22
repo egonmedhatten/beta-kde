@@ -21,8 +21,8 @@ class BetaKDE(BaseEstimator, DensityMixin):
     bandwidth : float, str, or None, default=None
         The bandwidth of the kernel (defined on the scaled [0, 1] space).
         - If float: It is the fixed bandwidth.
-        - If str: Must be one of ['LCV', 'LSCV', 'MISE_rule'].
-        - If None: Defaults to 'MISE_rule'.
+        - If str: Must be one of ['LCV', 'LSCV', 'beta-reference'].
+        - If None: Defaults to 'beta-reference'.
         
     bounds : tuple of float, default=(0.0, 1.0)
         The support of the data (min, max). Data outside this range during fit
@@ -44,7 +44,7 @@ class BetaKDE(BaseEstimator, DensityMixin):
         Verbosity level.
     """
 
-    VALID_SELECTION_METHODS = ["LCV", "LSCV", "MISE_rule"]
+    VALID_SELECTION_METHODS = ["LCV", "LSCV", "beta-reference"]
 
     def __init__(
         self,
@@ -148,8 +148,8 @@ class BetaKDE(BaseEstimator, DensityMixin):
             
         elif self.bandwidth is None:
             if self.verbose > 0:
-                print("No bandwidth specified. Defaulting to MISE_rule.")
-            self._select_bandwidth(method="MISE_rule")
+                print("No bandwidth specified. Defaulting to beta-reference.")
+            self._select_bandwidth(method="beta-reference")
             
         else:
             raise ValueError("Invalid bandwidth parameter.")
@@ -186,10 +186,10 @@ class BetaKDE(BaseEstimator, DensityMixin):
             )
             self.is_fallback_ = False
             
-        elif method == "MISE_rule":
+        elif method == "beta-reference":
             if self.verbose > 0:
                 print("Selecting bandwidth using MISE rule...")
-            self.bandwidth_, self.is_fallback_ = self._select_bandwidth_mise_rule()
+            self.bandwidth_, self.is_fallback_ = self._select_bandwidth_beta_reference()
             if self.verbose > 0:
                  if self.is_fallback_:
                      print(f"MISE rule failed constraints. Using fallback: h = {self.bandwidth_:.4f}")
@@ -525,7 +525,7 @@ class BetaKDE(BaseEstimator, DensityMixin):
         if s == 0: return 1e-5
         return C * (n ** (-0.4))
 
-    def _select_bandwidth_mise_rule(self):
+    def _select_bandwidth_beta_reference(self):
         # Operates on scaled data in [0, 1]
         X_filtered = self.data_clipped_[(self.data_clipped_ > 0) & (self.data_clipped_ < 1)]
         
@@ -576,12 +576,8 @@ class BetaKDE(BaseEstimator, DensityMixin):
 
         except (ValueError, RuntimeError) as e:
             if not (hasattr(self, "ahat_") and hasattr(self, "bhat_")):
-                try:
-                    self._estimate_beta_params(X_filtered)
-                except ValueError:
-                     if np.var(X_filtered) == 0:
-                         return 1e-5, True
-                     return 0.1, True
+                
+                self._estimate_beta_params(X_filtered)
 
             h_final = self._calculate_hybrid_fallback(self.ahat_, self.bhat_)
             is_fallback = True

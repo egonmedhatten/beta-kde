@@ -73,15 +73,15 @@ def test_validate_data_range(simple_data):
     # Case 1: Default bounds (0, 1)
     kde = BetaKDE()
     with pytest.raises(ValueError, match="within the interval"):
-        kde.fit(np.array([-0.1]))
+        kde.fit(np.array([-0.1, 0.1, 0.5, 1.2]))
         
     # Case 2: Custom bounds (0, 10)
     kde_custom = BetaKDE(bounds=(0, 10))
     # This should pass
-    kde_custom.fit(np.array([5.0]))
+    kde_custom.fit(np.array([2.0, 5.0, 7.0]))
     # This should fail
     with pytest.raises(ValueError, match="within the interval"):
-        kde_custom.fit(np.array([10.1]))
+        kde_custom.fit(np.array([2.0, 5.0, 7.0, 10.1]))
 
 def test_input_validation_shapes():
     """Test Scikit-learn style input validation."""
@@ -108,7 +108,7 @@ def test_custom_bounds_scaling():
     np.random.seed(42)
     data = np.random.beta(2, 5, size=100) * 100
     
-    kde = BetaKDE(bounds=(0, 100), bandwidth="MISE_rule")
+    kde = BetaKDE(bounds=(0, 100), bandwidth="beta-reference")
     kde.fit(data)
     
     assert kde.is_fitted_
@@ -182,17 +182,16 @@ def test_constant_data_behavior():
     # This tests the fallback logic in _select_bandwidth_mise_rule
     # when variance is 0.
     data = np.array([0.5, 0.5, 0.5, 0.5])
-    kde = BetaKDE(bandwidth="MISE_rule")
-    
-    kde.fit(data)
-    assert kde.bandwidth_ == 1e-5
-    assert kde.is_fallback_
+    kde = BetaKDE(bandwidth="beta-reference")
+    with pytest.raises(ValueError, match="Sample variance is zero"):
+        kde.fit(data)
+
 
 # --- MISE Rule Tests ---
 
 def test_mise_rule_exact_math(beta_data):
     """Test that the ported MISE rule produces the expected result."""
-    kde = BetaKDE(bandwidth="MISE_rule", verbose=0)
+    kde = BetaKDE(bandwidth="beta-reference", verbose=0)
     kde.fit(beta_data)
     
     assert not kde.is_fallback_
@@ -211,7 +210,7 @@ def test_mise_with_boundaries_sufficient_data():
     data[0] = 0.0
     data[1] = 1.0
     
-    kde = BetaKDE(bandwidth="MISE_rule", verbose=0)
+    kde = BetaKDE(bandwidth="beta-reference", verbose=0)
     kde.fit(data)
     
     # Should NOT fallback because distribution parameters > 1.5
@@ -220,7 +219,7 @@ def test_mise_with_boundaries_sufficient_data():
 
 def test_mise_rule_fails_safely(bad_mise_data):
     """Test that MISE rule falls back safely when assumptions are violated."""
-    kde = BetaKDE(bandwidth="MISE_rule", verbose=1)
+    kde = BetaKDE(bandwidth="beta-reference", verbose=1)
     
     # Should warn about fallback
     with pytest.warns(RuntimeWarning, match="MISE Rule failed"):

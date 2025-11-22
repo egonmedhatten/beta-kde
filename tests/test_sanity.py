@@ -36,7 +36,7 @@ def test_sanity_check_mise_bandwidth():
     old_kde.fit(data)
     bw_old = old_kde.bandwidth
     
-    new_kde = NewKDE(bandwidth="MISE_rule", verbose=0)
+    new_kde = NewKDE(bandwidth="beta-reference", verbose=0)
     new_kde.fit(data)
     bw_new = new_kde.bandwidth_
     

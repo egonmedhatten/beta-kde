@@ -12,7 +12,7 @@ def test_large_sample_performance():
     np.random.seed(42)
     data = np.random.beta(2, 5, size=n_samples)
     
-    kde = BetaKDE(bandwidth="MISE_rule")
+    kde = BetaKDE(bandwidth="beta-reference")
     
     start_time = time.time()
     kde.fit(data, compute_normalization=True)
