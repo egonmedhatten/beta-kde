@@ -8,6 +8,7 @@ version = "0.1.1"
 description = "Beta Kernel Density Estimation with automatic bandwidth selection, compatible with Scikit-learn"
 readme = "README.md"
 requires-python = ">=3.8"
+license = {text = "BSD-3-Clause"}
 authors = [
   {name="Johan Hallberg Szabadvary", email="johan.hallberg.szabadvary@ju.se" },
 ]
@@ -26,3 +27,6 @@ dev = [
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[project.urls]
+"Homepage" = "https://github.com/egonmedhatten/beta-kde"
