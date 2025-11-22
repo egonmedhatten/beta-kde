@@ -10,7 +10,8 @@ def test_large_sample_performance():
     """
     n_samples = 10000
     np.random.seed(42)
-    data = np.random.beta(2, 5, size=n_samples)
+    # Ensure 2D (Column Vector)
+    data = np.random.beta(2, 5, size=n_samples).reshape(-1, 1)
     
     kde = BetaKDE(bandwidth="beta-reference")
     

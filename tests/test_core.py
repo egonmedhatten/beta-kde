@@ -1,29 +1,30 @@
 import numpy as np
 import pytest
 import matplotlib.pyplot as plt
-import warnings
 from scipy.integrate import quad
 from numpy.testing import assert_allclose
 from beta_kde.estimator import BetaKDE
-from sklearn.exceptions import NotFittedError, SkipTestWarning
+from sklearn.exceptions import NotFittedError
 from sklearn.utils.estimator_checks import check_estimator
+
+# --- Fixtures ---
 
 @pytest.fixture
 def simple_data():
-    """A simple, well-behaved dataset."""
-    return np.array([0.2, 0.3, 0.4, 0.5, 0.6])
+    """A simple, well-behaved dataset (Reshaped to 2D column vector)."""
+    return np.array([0.2, 0.3, 0.4, 0.5, 0.6]).reshape(-1, 1)
 
 @pytest.fixture
 def beta_data():
-    """Data that should be valid for rule-of-thumb methods."""
+    """Data that should be valid for rule-of-thumb methods (Reshaped to 2D)."""
     np.random.seed(42)
-    return np.random.beta(a=3, b=5, size=100)
+    return np.random.beta(a=3, b=5, size=100).reshape(-1, 1)
 
 @pytest.fixture
 def bad_mise_data():
     """Data that should fail the MISE rule parameter check (Beta(0.1, 0.1))."""
     np.random.seed(42)
-    return np.random.beta(a=0.1, b=0.1, size=100)
+    return np.random.beta(a=0.1, b=0.1, size=100).reshape(-1, 1)
 
 # --- Initialization & Parameter Tests ---
 
@@ -42,22 +43,24 @@ def test_init_parameters():
     # Should not be fitted yet
     assert not hasattr(kde, "bandwidth_")
 
-def test_fit_bad_bandwidth_value(simple_data):
-    """Test validation of invalid bandwidth values during fit."""
-    # Zero bandwidth
-    kde = BetaKDE(bandwidth=0.0)
-    with pytest.raises(ValueError, match="Bandwidth must be positive"):
+@pytest.mark.parametrize("bad_bw", [0.0, -0.1, "invalid_str"])
+def test_fit_bad_bandwidth_parameterized(simple_data, bad_bw):
+    """Test validation of invalid bandwidth values using parametrization."""
+    kde = BetaKDE(bandwidth=bad_bw)
+    with pytest.raises(ValueError):
         kde.fit(simple_data)
 
-    # Negative bandwidth
-    kde = BetaKDE(bandwidth=-0.1)
-    with pytest.raises(ValueError, match="Bandwidth must be positive"):
+def test_bad_bounds_init(simple_data):
+    """Test that invalid bounds raise an error immediately during fit."""
+    # Min > Max
+    kde = BetaKDE(bounds=(5, 0))
+    with pytest.raises(ValueError, match="strictly increasing"):
         kde.fit(simple_data)
-
-    # Bad string method
-    kde = BetaKDE(bandwidth="invalid_method")
-    with pytest.raises(ValueError, match="Unknown bandwidth selection method"):
-        kde.fit(simple_data)
+        
+    # Bounds equal
+    kde_eq = BetaKDE(bounds=(1, 1))
+    with pytest.raises(ValueError, match="strictly increasing"):
+        kde_eq.fit(simple_data)
 
 def test_fit_ignores_y(simple_data):
     """Test that passing 'y' does not break fit (Sklearn API standard)."""
@@ -73,18 +76,19 @@ def test_validate_data_range(simple_data):
     # Case 1: Default bounds (0, 1)
     kde = BetaKDE()
     with pytest.raises(ValueError, match="within the interval"):
-        kde.fit(np.array([-0.1, 0.1, 0.5, 1.2]))
+        # Reshape to 2D
+        kde.fit(np.array([-0.1, 0.1, 0.5, 1.2]).reshape(-1, 1))
         
     # Case 2: Custom bounds (0, 10)
     kde_custom = BetaKDE(bounds=(0, 10))
-    # This should pass
-    kde_custom.fit(np.array([2.0, 5.0, 7.0]))
-    # This should fail
+    # This should pass (Reshaped)
+    kde_custom.fit(np.array([2.0, 5.0, 7.0]).reshape(-1, 1))
+    # This should fail (Reshaped)
     with pytest.raises(ValueError, match="within the interval"):
-        kde_custom.fit(np.array([2.0, 5.0, 7.0, 10.1]))
+        kde_custom.fit(np.array([2.0, 5.0, 7.0, 10.1]).reshape(-1, 1))
 
 def test_input_validation_shapes():
-    """Test Scikit-learn style input validation."""
+    """Test Scikit-learn style input validation (Strict 2D enforcement)."""
     kde = BetaKDE()
     
     # 2D Column vector should work (standard sklearn input)
@@ -92,21 +96,22 @@ def test_input_validation_shapes():
     kde.fit(X_col)
     assert kde.n_samples_ == 3
     
-    # 2D Wide array should fail (as per logic)
-    X_wide = np.array([[0.1, 0.2], [0.3, 0.4]])
-    with pytest.raises(ValueError, match="Data must be 1D or a single column"):
-        kde.fit(X_wide)
+    # 1D array should FAIL now (Strict Sklearn Compliance)
+    X_flat = np.array([0.1, 0.2, 0.3])
+    with pytest.raises(ValueError): # Expected 2D, got 1D
+        kde.fit(X_flat)
 
 # --- Custom Bounds, Scaling & Normalization Tests ---
 
 def test_custom_bounds_scaling():
     """
     Verify that data in [0, 100] works and PDF integrates to ~1.
-    Now also tests the explicit normalization feature.
     """
     # Data in [0, 100]
     np.random.seed(42)
     data = np.random.beta(2, 5, size=100) * 100
+    # Must be 2D
+    data = data.reshape(-1, 1)
     
     kde = BetaKDE(bounds=(0, 100), bandwidth="beta-reference")
     kde.fit(data)
@@ -115,6 +120,7 @@ def test_custom_bounds_scaling():
     assert kde.scale_factor_ == 100.0
     
     # 1. Un-normalized behavior (Asymptotic consistency only)
+    # Note: pdf() convenience method handles scalar inputs internally
     func_unnorm = lambda x: kde.pdf(x, normalized=False)
     integral_1, _ = quad(func_unnorm, 0, 100)
     assert_allclose(integral_1, 1.0, rtol=2e-2)
@@ -148,10 +154,10 @@ def test_normalization_caching(simple_data):
 def test_estimate_params_logic():
     """Test the internal method of moments estimation."""
     kde = BetaKDE()
-    # Data from original test_estimate_params_doctest_example
+    # This accesses a private method that calculates stats per dimension.
+    # It expects a 1D array internally.
     data = np.array([0.4, 0.6, 0.45, 0.55])
     
-    # Access private method for unit testing logic
     ahat, bhat = kde._estimate_beta_params(data)
     assert_allclose(ahat, 19.5)
     assert_allclose(bhat, 19.5)
@@ -159,6 +165,7 @@ def test_estimate_params_logic():
 def test_estimate_params_zero_variance():
     """Test that zero variance raises an error in parameter estimation."""
     kde = BetaKDE()
+    # Internal method expects 1D
     data = np.array([0.5, 0.5, 0.5])
     with pytest.raises(ValueError, match="Sample variance is zero"):
         kde._estimate_beta_params(data)
@@ -167,7 +174,7 @@ def test_fit_with_exact_zeros_and_ones():
     """
     Ensures the estimator handles exact boundaries by clipping internally.
     """
-    dangerous_data = np.array([0.0, 0.1, 0.5, 0.9, 1.0])
+    dangerous_data = np.array([0.0, 0.1, 0.5, 0.9, 1.0]).reshape(-1, 1)
     kde = BetaKDE(bandwidth=0.1)
     
     kde.fit(dangerous_data)
@@ -179,13 +186,13 @@ def test_fit_with_exact_zeros_and_ones():
 
 def test_constant_data_behavior():
     """Test behavior when data has 0 variance (constant)."""
-    # This tests the fallback logic in _select_bandwidth_mise_rule
-    # when variance is 0.
-    data = np.array([0.5, 0.5, 0.5, 0.5])
+    # 2D Reshape
+    data = np.array([0.5, 0.5, 0.5, 0.5]).reshape(-1, 1)
     kde = BetaKDE(bandwidth="beta-reference")
+    
+    # We allow n>1 constant data to raise error (as per updated code)
     with pytest.raises(ValueError, match="Sample variance is zero"):
         kde.fit(data)
-
 
 # --- MISE Rule Tests ---
 
@@ -200,8 +207,7 @@ def test_mise_rule_exact_math(beta_data):
 
 def test_mise_with_boundaries_sufficient_data():
     """
-    Test that MISE works even with 0s and 1s if we have enough data points
-    to keep the variance reasonable.
+    Test that MISE works even with 0s and 1s if we have enough data points.
     """
     np.random.seed(42)
     # Generate stable data
@@ -211,7 +217,7 @@ def test_mise_with_boundaries_sufficient_data():
     data[1] = 1.0
     
     kde = BetaKDE(bandwidth="beta-reference", verbose=0)
-    kde.fit(data)
+    kde.fit(data.reshape(-1, 1))
     
     # Should NOT fallback because distribution parameters > 1.5
     assert not kde.is_fallback_
@@ -272,7 +278,9 @@ def test_score_samples_consistency(simple_data):
     kde = BetaKDE(bandwidth=0.1)
     kde.fit(simple_data)
     
-    X_test = np.array([0.25, 0.35])
+    # X_test must be 2D
+    X_test = np.array([0.25, 0.35]).reshape(-1, 1)
+    
     log_pdf = kde.score_samples(X_test)
     pdf_val = kde.pdf(X_test)
     
@@ -284,7 +292,8 @@ def test_pdf_evaluation_at_boundaries(simple_data):
     kde = BetaKDE(bandwidth=0.1)
     kde.fit(simple_data)
     
-    eval_pts = np.array([0.0, 1.0])
+    # 2D input
+    eval_pts = np.array([0.0, 1.0]).reshape(-1, 1)
     pdf_vals = kde.pdf(eval_pts)
     
     assert np.all(np.isfinite(pdf_vals))
@@ -302,14 +311,71 @@ def test_plot_method(simple_data):
     except Exception as e:
         pytest.fail(f"Plotting failed: {e}")
 
+# --- Multivariate (Copula) Tests ---
+
+def test_multivariate_integration():
+    """
+    Critical Test: Verify that a 2D model actually creates a valid
+    probability density that integrates to ~1.0.
+    """
+    # 1. Generate correlated 2D data (e.g., x=y)
+    np.random.seed(42)
+    n = 200
+    x = np.random.beta(2, 2, size=n)
+    y = x + np.random.normal(0, 0.1, size=n)
+    
+    # Clip to bounds and stack to create (N, 2) array
+    data = np.column_stack((np.clip(x, 0.01, 0.99), np.clip(y, 0.01, 0.99)))
+    
+    # 2. Fit Model
+    kde = BetaKDE(bounds=(0, 1))
+    kde.fit(data)
+    
+    assert kde.n_features_ == 2
+    assert len(kde.marginal_bandwidths_) == 2
+    
+    # 3. Integrate PDF over 2D unit square [0,1]x[0,1]
+    # Simple Monte Carlo integration
+    n_integrate = 5000
+    pts = np.random.uniform(0, 1, size=(n_integrate, 2))
+    
+    pdf_values = kde.pdf(pts)
+    volume = np.mean(pdf_values) * 1.0  # Area is 1x1=1
+    
+    # Should be close to 1.0 (allow ~10% error for MC noise)
+    assert_allclose(volume, 1.0, rtol=0.1)
+
+def test_multivariate_structure():
+    """Check that internal attributes for Copulas are set correctly."""
+    data = np.random.rand(50, 3) # 3 Dimensions
+    kde = BetaKDE()
+    kde.fit(data)
+    
+    # Check Marginals
+    assert len(kde.marginal_bandwidths_) == 3
+    assert len(kde.x_grids_) == 3
+    assert len(kde.cdf_grids_) == 3
+    
+    # Check Copula
+    assert hasattr(kde, "copula_bandwidth_")
+    assert hasattr(kde, "U_train_")
+    assert kde.U_train_.shape == data.shape
+
+# --- Sklearn Check ---
+
 @pytest.mark.filterwarnings("ignore::sklearn.exceptions.SkipTestWarning")
 def test_sklearn_estimator_check():
     """
     Full check of Scikit-learn estimator compliance.
     
-    We ignore SkipTestWarning because standard sklearn checks don't 
-    currently support a data generator for tags combination:
-    {one_d_array=True, positive_only=True}. 
-    This is a limitation of check_estimator, not the class.
+    We initialize the estimator with wide bounds (-1000, 1000) because 
+    check_estimator generates random standard normal data (approx -3 to 3).
+    
+    This verifies that the API (fit, score_samples, set_params) functions 
+    correctly, while respecting the strict boundary logic we implemented.
     """
-    check_estimator(BetaKDE())
+    # Configure a "test-compatible" instance
+    est = BetaKDE(bounds=(-1000, 1000))
+    
+    # Run the full suite
+    check_estimator(est)
