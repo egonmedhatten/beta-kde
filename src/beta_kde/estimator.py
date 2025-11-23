@@ -1,5 +1,5 @@
 import warnings
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Optional, Tuple, Union
 
 import numpy as np
 import scipy.integrate
@@ -8,6 +8,10 @@ import scipy.special as sp
 from scipy.stats import beta as beta_dist
 from sklearn.base import BaseEstimator, DensityMixin
 from sklearn.utils.validation import check_array, check_is_fitted
+
+# TODO: Save the bandwidth_ attribute properly for multi-dimensional data. It should be a vector (or dictionary) 
+# with the bandwidth for each marginal density. (currently, it is saved in self.marginal_bandwidths_)
+# Ensure that we also save the marginal ahat_ and bhat_ (useful for debugging)
 
 
 class BetaKDE(DensityMixin, BaseEstimator):
