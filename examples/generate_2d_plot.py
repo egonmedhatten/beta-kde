@@ -3,7 +3,7 @@ import os
 
 # Add the ../src directory to Python's path
 current_dir = os.path.dirname(os.path.abspath(__file__))
-src_path = os.path.join(current_dir, '..', 'src')
+src_path = os.path.join(current_dir, "..", "src")
 sys.path.insert(0, src_path)
 
 import numpy as np
@@ -23,7 +23,7 @@ y = x + np.random.normal(0, 0.15, size=n)
 data_2d = np.column_stack((np.clip(x, 0.01, 0.99), np.clip(y, 0.01, 0.99)))
 
 # 2. Fit Beta KDE
-kde_2d = BetaKDE(bandwidth='beta-reference').fit(data_2d)
+kde_2d = BetaKDE(bandwidth="beta-reference").fit(data_2d)
 
 # 3. Evaluate on Grid for Contour Plot
 grid_pts = np.linspace(0, 1, 100)
@@ -35,8 +35,8 @@ Z = np.exp(Z_log).reshape(100, 100)
 
 # 4. Plot
 plt.figure(figsize=(7, 6))
-plt.scatter(data_2d[:, 0], data_2d[:, 1], s=5, alpha=0.3, color='gray', label='Data')
-plt.contour(X_grid, Y_grid, Z, levels=15, cmap='Reds', linewidths=1.5)
+plt.scatter(data_2d[:, 0], data_2d[:, 1], s=5, alpha=0.3, color="gray", label="Data")
+plt.contour(X_grid, Y_grid, Z, levels=15, cmap="Reds", linewidths=1.5)
 plt.title("2D Beta Copula Density Estimation")
 plt.xlabel("Feature 1")
 plt.ylabel("Feature 2")
@@ -46,5 +46,5 @@ plt.grid(True, alpha=0.3)
 
 # Save
 output_path = "assets/2d_copula.png"
-plt.savefig(output_path, dpi=300, bbox_inches='tight')
+plt.savefig(output_path, dpi=300, bbox_inches="tight")
 print(f"Plot saved to {output_path}")

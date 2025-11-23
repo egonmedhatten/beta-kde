@@ -15,27 +15,27 @@ class BetaKDE(DensityMixin, BaseEstimator):
     Beta Kernel Density Estimation with Scikit-learn API compatibility.
 
     This estimator is designed for data strictly bounded within a fixed support
-    (default [0, 1]). It addresses the **Boundary Bias** problem common in 
-    Gaussian KDEs by using Beta distributions as kernels. These kernels naturally 
-    match the support of the data and adapt their shape (becoming asymmetric) 
+    (default [0, 1]). It addresses the **Boundary Bias** problem common in
+    Gaussian KDEs by using Beta distributions as kernels. These kernels naturally
+    match the support of the data and adapt their shape (becoming asymmetric)
     near boundaries to prevent probability mass leakage [1]_.
 
     **Key Features:**
-    
+
     - **1D Data:** Uses Chen's Boundary-Corrected Beta Kernel estimator.
-    - **Bandwidth Selection:** Implements the "Beta Reference Rule" [2]_, a fast 
-      $\mathcal{O}(1)$ closed-form selector that matches the accuracy of iterative 
+    - **Bandwidth Selection:** Implements the "Beta Reference Rule" [2]_, a fast
+      $\mathcal{O}(1)$ closed-form selector that matches the accuracy of iterative
       optimization (LSCV) while being orders of magnitude faster.
     - **Multivariate:** Uses a Non-Parametric Beta Copula. Marginals are fitted
-      independently using the Beta Reference Rule, and dependence structure is 
-      modeled via a Product Beta Kernel on the transformed uniform space 
+      independently using the Beta Reference Rule, and dependence structure is
+      modeled via a Product Beta Kernel on the transformed uniform space
       (Probability Integral Transform).
 
     Parameters
     ----------
     bandwidth : float, str, or None, default=None
         The bandwidth selection method for the MARGINALS.
-        
+
         * **float**: A fixed bandwidth value ($0 < h < 1$) applied to all dimensions.
         * **'beta-reference'** (Default): The "Beta Reference Rule" proposed in [2]_.
           It minimizes the AMISE of a Beta reference distribution using method-of-moments.
@@ -84,7 +84,7 @@ class BetaKDE(DensityMixin, BaseEstimator):
         The selected bandwidth $h$ for each dimension.
 
     copula_bandwidth_ : float
-        The bandwidth used for the Copula kernel (calculated via Scott's Rule), 
+        The bandwidth used for the Copula kernel (calculated via Scott's Rule),
         only applicable if n_features > 1.
 
     normalization_constant_ : float or None
@@ -98,7 +98,7 @@ class BetaKDE(DensityMixin, BaseEstimator):
     -----
     **Mathematical Formulation:**
     The density estimate $\hat{f}(x)$ is given by:
-    
+
     .. math::
         \hat{f}(x) = \frac{1}{n} \sum_{i=1}^{n} K(x, X_i, h)
 
@@ -116,9 +116,9 @@ class BetaKDE(DensityMixin, BaseEstimator):
 
     References
     ----------
-    .. [1] Chen, S. X. (1999). Beta kernel estimators for density functions. 
+    .. [1] Chen, S. X. (1999). Beta kernel estimators for density functions.
            *Computational Statistics & Data Analysis*, 31(2), 131-145.
-    .. [2] Szabadváry, J. H. (2025). A Fast, Closed-Form Bandwidth Selector for 
+    .. [2] Szabadváry, J. H. (2025). A Fast, Closed-Form Bandwidth Selector for
            the Beta Kernel Density Estimator. *[Preprint/In Press]*.
 
     Examples
@@ -192,11 +192,11 @@ class BetaKDE(DensityMixin, BaseEstimator):
 
         # 1. Validate Input
         # ensure_2d=True forces standard sklearn behavior (ValueError on 1D input).
-        X = check_array(X, ensure_2d=True, order='C', dtype=np.float64)
+        X = check_array(X, ensure_2d=True, order="C", dtype=np.float64)
 
         self.n_samples_, self.n_features_ = X.shape
         self.training_data_ = X
-        
+
         # REQUIRED for check_estimator compatibility
         self.n_features_in_ = self.n_features_
 
@@ -212,12 +212,16 @@ class BetaKDE(DensityMixin, BaseEstimator):
             )
 
         # Validate Bandwidth Parameter
-        if isinstance(self.bandwidth, (float, int)) and not isinstance(self.bandwidth, bool):
+        if isinstance(self.bandwidth, (float, int)) and not isinstance(
+            self.bandwidth, bool
+        ):
             if self.bandwidth <= 0:
                 raise ValueError("Bandwidth must be positive.")
         elif isinstance(self.bandwidth, str):
             if self.bandwidth not in self.VALID_SELECTION_METHODS:
-                raise ValueError(f"Unknown bandwidth selection method: '{self.bandwidth}'")
+                raise ValueError(
+                    f"Unknown bandwidth selection method: '{self.bandwidth}'"
+                )
 
         # 2. Scale Data to [0, 1]
         self.scale_factor_ = upper - lower
@@ -245,7 +249,9 @@ class BetaKDE(DensityMixin, BaseEstimator):
 
             if self.verbose > 0:
                 if is_fb:
-                    print(f"  Dim {d+1}: MISE rule failed constraints. Using fallback: h = {h:.4f}")
+                    print(
+                        f"  Dim {d+1}: MISE rule failed constraints. Using fallback: h = {h:.4f}"
+                    )
                 elif self.n_features_ > 1:
                     print(f"  Dim {d+1}: Bandwidth selected: h = {h:.4f}")
 
@@ -265,7 +271,9 @@ class BetaKDE(DensityMixin, BaseEstimator):
             self.is_fallback_ = fallback_statuses[0]
             if self.verbose > 0:
                 if self.is_fallback_:
-                    print(f"MISE rule failed constraints. Using fallback: h = {self.bandwidth_:.4f}")
+                    print(
+                        f"MISE rule failed constraints. Using fallback: h = {self.bandwidth_:.4f}"
+                    )
                 else:
                     print(f"Bandwidth selected by MISE rule: h = {self.bandwidth_:.4f}")
 
@@ -301,7 +309,7 @@ class BetaKDE(DensityMixin, BaseEstimator):
 
         x_valid = x_val[mask]
         k_mat = self._kernel_matrix(x_valid, data_d, h)
-        
+
         res = np.zeros_like(x_val)
         res[mask] = np.mean(k_mat, axis=1)
 
@@ -323,12 +331,12 @@ class BetaKDE(DensityMixin, BaseEstimator):
 
             # Pass arguments explicitly to allow pickling
             integral, _ = scipy.integrate.quad(
-                self._normalization_integrand, 
-                0, 
-                1, 
-                args=(h, data_d), 
-                epsabs=1e-4, 
-                limit=50
+                self._normalization_integrand,
+                0,
+                1,
+                args=(h, data_d),
+                epsabs=1e-4,
+                limit=50,
             )
             marginal_constants.append(integral)
 
@@ -359,7 +367,7 @@ class BetaKDE(DensityMixin, BaseEstimator):
         # Enforce 2D to match fit behavior
         if np.ndim(X) == 0:
             X = np.array([[X]])
-        X = check_array(X, ensure_2d=True, order='C', dtype=np.float64)
+        X = check_array(X, ensure_2d=True, order="C", dtype=np.float64)
 
         if hasattr(self, "n_features_in_"):
             if X.shape[1] != self.n_features_in_:
@@ -368,7 +376,9 @@ class BetaKDE(DensityMixin, BaseEstimator):
                     f"{self.n_features_in_} features as input."
                 )
         elif X.shape[1] != self.n_features_:
-            raise ValueError(f"Mismatch in dimensions. Model: {self.n_features_}, Data: {X.shape[1]}")
+            raise ValueError(
+                f"Mismatch in dimensions. Model: {self.n_features_}, Data: {X.shape[1]}"
+            )
 
         X_scaled = (X - self.shift_) / self.scale_factor_
         X_safe = np.clip(X_scaled, self._epsilon, 1.0 - self._epsilon)
@@ -389,7 +399,9 @@ class BetaKDE(DensityMixin, BaseEstimator):
         # 2. Add Copula Log-Likelihood (If Multivariate)
         if self.n_features_ > 1:
             U_test = self._transform_to_uniform(X_safe)
-            log_copula = self._score_copula(U_test, self.U_train_, self.copula_bandwidth_)
+            log_copula = self._score_copula(
+                U_test, self.U_train_, self.copula_bandwidth_
+            )
             log_density += log_copula
 
         if normalized:
@@ -401,7 +413,7 @@ class BetaKDE(DensityMixin, BaseEstimator):
     def score(self, X, y=None):
         """
         Compute the total log-likelihood under the model.
-        
+
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
@@ -418,7 +430,7 @@ class BetaKDE(DensityMixin, BaseEstimator):
     def pdf(self, X, normalized: bool = False):
         """
         Convenience method returning the probability density (exp(score_samples)).
-        
+
         Parameters
         ----------
         X : array-like or scalar
@@ -507,7 +519,9 @@ class BetaKDE(DensityMixin, BaseEstimator):
                 axes_list = [ax]
             else:
                 if not isinstance(ax, (list, np.ndarray)):
-                    warnings.warn("Multivariate plot requested but single axis provided. Plotting 1st dimension only.")
+                    warnings.warn(
+                        "Multivariate plot requested but single axis provided. Plotting 1st dimension only."
+                    )
                     axes_list = [ax]
                 else:
                     axes_list = np.array(ax).flatten()
@@ -518,7 +532,7 @@ class BetaKDE(DensityMixin, BaseEstimator):
 
         for d in range(len(axes_list)):
             if d >= n_dims:
-                axes_list[d].axis('off')
+                axes_list[d].axis("off")
                 continue
 
             curr_ax = axes_list[d]
@@ -582,13 +596,16 @@ class BetaKDE(DensityMixin, BaseEstimator):
         if method == "LCV":
             return self._select_bandwidth_lcv(data_1d, self.bandwidth_bounds), False
         elif method == "LSCV":
-            return self._select_bandwidth_lscv(
-                data_1d, 
-                self.bandwidth_bounds, 
-                self.selection_grid_points, 
-                self.heuristic_factor, 
-                self.integration_points
-            ), False
+            return (
+                self._select_bandwidth_lscv(
+                    data_1d,
+                    self.bandwidth_bounds,
+                    self.selection_grid_points,
+                    self.heuristic_factor,
+                    self.integration_points,
+                ),
+                False,
+            )
         elif method == "beta-reference":
             return self._select_bandwidth_beta_reference(data_1d)
         raise ValueError(f"Unknown method: {method}")
@@ -630,9 +647,7 @@ class BetaKDE(DensityMixin, BaseEstimator):
 
     def _select_bandwidth_lcv(self, data, bounds):
         res = scipy.optimize.minimize_scalar(
-            lambda h: self._lcv_objective(h, data),
-            bounds=bounds,
-            method="bounded"
+            lambda h: self._lcv_objective(h, data), bounds=bounds, method="bounded"
         )
         if res.success:
             return float(res.x)
@@ -650,7 +665,9 @@ class BetaKDE(DensityMixin, BaseEstimator):
         term2 = (np.sum(K_data) - np.sum(np.diag(K_data))) * (-2 / (n * (n - 1)))
         return term1 + term2
 
-    def _select_bandwidth_lscv(self, data, bounds, grid_points, heuristic_factor, integration_points):
+    def _select_bandwidth_lscv(
+        self, data, bounds, grid_points, heuristic_factor, integration_points
+    ):
         std_dev = np.std(data, ddof=0)
         n = len(data)
         search_bounds = bounds
@@ -658,7 +675,7 @@ class BetaKDE(DensityMixin, BaseEstimator):
             h_rule = 0.9 * std_dev * (n ** (-0.2))
             search_bounds = (
                 max(bounds[0], h_rule / heuristic_factor),
-                min(bounds[1], h_rule * heuristic_factor)
+                min(bounds[1], h_rule * heuristic_factor),
             )
         h_grid = np.linspace(search_bounds[0], search_bounds[1], grid_points)
         scores = [self._lscv_objective(h, data, integration_points) for h in h_grid]
@@ -670,7 +687,7 @@ class BetaKDE(DensityMixin, BaseEstimator):
         res = scipy.optimize.minimize_scalar(
             lambda h: self._lscv_objective(h, data, integration_points),
             bounds=refine_bounds,
-            method="bounded"
+            method="bounded",
         )
         return float(res.x) if res.success else best_h
 
@@ -686,18 +703,25 @@ class BetaKDE(DensityMixin, BaseEstimator):
 
             a, b, n = ahat, bhat, len(data)
             log_num = (
-                np.log(2 * a + 2 * b - 5) + np.log(2 * a + 2 * b - 3)
-                + sp.gammaln(2 * a + 2 * b - 6) + sp.gammaln(a) + sp.gammaln(b)
-                + sp.gammaln(a - 0.5) + sp.gammaln(b - 0.5)
+                np.log(2 * a + 2 * b - 5)
+                + np.log(2 * a + 2 * b - 3)
+                + sp.gammaln(2 * a + 2 * b - 6)
+                + sp.gammaln(a)
+                + sp.gammaln(b)
+                + sp.gammaln(a - 0.5)
+                + sp.gammaln(b - 0.5)
             )
             denom_term_1 = (a - 1) * (b - 1)
             denom_term_2 = 6 - 4 * b + a * (3 * b - 4)
             if denom_term_1 <= 0 or denom_term_2 <= 0:
                 raise ValueError("Denominator factor non-positive.")
             log_denom = (
-                np.log(denom_term_1) + np.log(denom_term_2)
-                + sp.gammaln(2 * a - 3) + sp.gammaln(2 * b - 3)
-                + sp.gammaln(a + b) + sp.gammaln(a + b - 1)
+                np.log(denom_term_1)
+                + np.log(denom_term_2)
+                + sp.gammaln(2 * a - 3)
+                + sp.gammaln(2 * b - 3)
+                + sp.gammaln(a + b)
+                + sp.gammaln(a + b - 1)
             )
             log_factor = np.log(2) + np.log(n) + 0.5 * np.log(np.pi)
             log_h = (2 / 5) * (log_num - log_denom - log_factor)
@@ -708,7 +732,9 @@ class BetaKDE(DensityMixin, BaseEstimator):
         except (ValueError, RuntimeError) as e:
             # Allow fallback if sample variance is zero ONLY if N=1 or we decide to support it.
             # Currently strict on N>1 constant data to match tests.
-            if ("Sample variance is zero" in str(e) or "too large" in str(e)) and len(data) > 1:
+            if ("Sample variance is zero" in str(e) or "too large" in str(e)) and len(
+                data
+            ) > 1:
                 raise e
 
             if not (hasattr(self, "ahat_") and hasattr(self, "bhat_")):
