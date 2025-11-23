@@ -10,28 +10,42 @@ readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "BSD-3-Clause"}
 authors = [
-  {name="Johan Hallberg Szabadvary", email="johan.hallberg.szabadvary@ju.se" },
+  {name = "Johan Hallberg Szabadvary", email = "johan.hallberg.szabadvary@ju.se"}
 ]
 dependencies = [
     "numpy>=1.20",
     "scipy>=1.7",
     "scikit-learn>=1.0",
-    "matplotlib>=3.0",  # Optional, but used in plot methods
-    "tqdm"              # Optional
+    "matplotlib>=3.0",
 ]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+keywords = ["kernel-density-estimation", "kde", "beta-kernel", "bounded-data", "scikit-learn"]
+
+[project.urls]
+"Homepage" = "https://github.com/egonmedhatten/beta-kde"
+
 [project.optional-dependencies]
 dev = [
     "pytest",
-    "pytest-cov"
+    "pytest-cov",
+    "black",
+    "ruff",
+    "build",
+    "twine"
 ]
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
-[project.urls]
-"Homepage" = "https://github.com/egonmedhatten/beta-kde"
-
-# --- NEW SECTION ---
 [tool.pytest.ini_options]
 # Always run with coverage for the src/beta_kde package and show missing lines
 addopts = "--cov=src/beta_kde --cov-report=term-missing"
