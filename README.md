@@ -33,6 +33,7 @@ pip install beta-kde
 ```
 
 ## ⚡ Quick Start
+💡 **See the [Tutorial Notebook](examples/tutorial.ipynb) for detailed examples, including visualization and classification.**
 1. Univariate Data (The Standard Case)
 BetaKDE enforces Scikit-learn's 2D input standard (n_samples, n_features).
 
@@ -81,7 +82,7 @@ If your data represents percentages, probabilities, or physical constraints (e.g
 | :--- | :--- | :--- |
 | **Kernel** | Gaussian (Symmetric) | Beta (Asymmetric) |
 | **Boundary Handling** | **Biased** (Leaks mass < 0) | **Correct** (Strictly $\ge 0$) |
-| **Bandwidth Selection** | Heuristic (Silverman) | **Smart** (Beta Reference Rule) |
+| **Bandwidth Selection** | Gaussian Reference Rule | **Beta Reference Rule** |
 | **Multivariate** | Symmetric Gaussian Blob | Flexible Non-Parametric Copula |
 | **Speed (Prediction)** | Fast (Tree-based) | Moderate (Exact summation) |
 
