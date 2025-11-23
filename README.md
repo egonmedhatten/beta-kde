@@ -3,6 +3,7 @@
 [![PyPI version](https://badge.fury.io/py/beta-kde.svg)](https://badge.fury.io/py/beta-kde)
 [![License](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 [![Tests](https://github.com/egonmedhatten/beta-kde/actions/workflows/tests.yml/badge.svg)](https://github.com/egonmedhatten/beta-kde/actions)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/egonmedhatten/beta-kde/HEAD?urlpath=%2Fdoc%2Ftree%2Fexamples%2Ftutorial.ipynb)
 
 **Fast, finite-sample boundary correction for data strictly bounded in [0, 1].**
 
