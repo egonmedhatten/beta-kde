@@ -29,7 +29,7 @@ jobs:
           # Install the package in editable mode with dev dependencies
           pip install -e .[dev]
           # Explicitly install build tools if needed
-          pip install build twine
+          pip install build twine nbconvert ipykernel
 
       - name: Run tests with pytest
         # This runs all tests in the 'tests/' folder
