@@ -9,10 +9,6 @@ from scipy.stats import beta as beta_dist
 from sklearn.base import BaseEstimator, DensityMixin
 from sklearn.utils.validation import check_array, check_is_fitted
 
-# TODO: Save the bandwidth_ attribute properly for multi-dimensional data. It should be a vector (or dictionary) 
-# with the bandwidth for each marginal density. (currently, it is saved in self.marginal_bandwidths_)
-# Ensure that we also save the marginal ahat_ and bhat_ (useful for debugging)
-
 
 class BetaKDE(DensityMixin, BaseEstimator):
     r"""
@@ -20,122 +16,34 @@ class BetaKDE(DensityMixin, BaseEstimator):
 
     This estimator is designed for data strictly bounded within a fixed support
     (default [0, 1]). It addresses the **Boundary Bias** problem common in
-    Gaussian KDEs by using Beta distributions as kernels. These kernels naturally
-    match the support of the data and adapt their shape (becoming asymmetric)
-    near boundaries to prevent probability mass leakage [1]_.
-
-    **Key Features:**
-
-    - **1D Data:** Uses Chen's Boundary-Corrected Beta Kernel estimator.
-    - **Bandwidth Selection:** Implements the "Beta Reference Rule" [2]_, a fast
-      $\mathcal{O}(1)$ closed-form selector that matches the accuracy of iterative
-      optimization (LSCV) while being orders of magnitude faster.
-    - **Multivariate:** Uses a Non-Parametric Beta Copula. Marginals are fitted
-      independently using the Beta Reference Rule, and dependence structure is
-      modeled via a Product Beta Kernel on the transformed uniform space
-      (Probability Integral Transform).
+    Gaussian KDEs by using Beta distributions as kernels.
 
     Parameters
     ----------
     bandwidth : float, str, or None, default=None
         The bandwidth selection method for the MARGINALS.
-
-        * **float**: A fixed bandwidth value ($0 < h < 1$) applied to all dimensions.
-        * **'beta-reference'** (Default): The "Beta Reference Rule" proposed in [2]_.
-          It minimizes the AMISE of a Beta reference distribution using method-of-moments.
-          Includes a robust heuristic fallback for U-shaped or J-shaped distributions.
-        * **'LCV'** (Likelihood Cross-Validation): Maximizes the likelihood of leave-one-out
-          data. Very accurate but slow and potentially unstable.
-        * **'LSCV'** (Least Squares Cross-Validation): Minimizes the integrated squared error.
-          Good compromise between speed and accuracy, but computationally expensive.
+        Options: float, 'beta-reference', 'LCV', 'LSCV'.
 
     bounds : tuple of float, default=(0.0, 1.0)
-        The strict support of the data (min, max). Data MUST be within this range.
-        The estimator automatically scales data to [0, 1] internally and rescales
-        results back to the original domain.
+        The strict support of the data (min, max).
 
     bandwidth_bounds : tuple of float, default=(0.01, 0.2)
         The search range (min_h, max_h) used when `bandwidth` is set to 'LCV' or 'LSCV'.
 
     selection_grid_points : int, default=30
-        Number of grid points to use for the brute-force stage of LSCV grid search.
+        Points for LSCV grid search.
 
     heuristic_factor : float, default=4.0
-        Expansion factor for determining the heuristic search range in LSCV.
+        Expansion factor for LSCV heuristic search.
 
     integration_points : int, default=200
-        Number of points used for numerical integration in LSCV optimization.
+        Points used for numerical integration in LSCV.
 
     copula_grid_size : int, default=1000
-        Resolution of the grid used to transform Marginals to Copula space
-        (Probability Integral Transform) for multivariate data.
+        Resolution of the grid used for Copula transformation.
 
     verbose : int, default=0
-        Verbosity level. If > 0, prints bandwidth selection progress.
-
-    Attributes
-    ----------
-    n_samples_ : int
-        The number of samples in the training data.
-
-    n_features_ : int
-        The number of features (dimensions).
-
-    bandwidth_ : float or None
-        The selected bandwidth (if 1D). None if multivariate (see `marginal_bandwidths_`).
-
-    marginal_bandwidths_ : list of float
-        The selected bandwidth $h$ for each dimension.
-
-    copula_bandwidth_ : float
-        The bandwidth used for the Copula kernel (calculated via Scott's Rule),
-        only applicable if n_features > 1.
-
-    normalization_constant_ : float or None
-        The computed integral of the density over the support. Used to normalize
-        `pdf()` calls. Calculated lazily or upon request.
-
-    training_data_ : array-like of shape (n_samples, n_features)
-        The training data, stored to allow exact kernel scoring.
-
-    Notes
-    -----
-    **Mathematical Formulation:**
-    The density estimate $\hat{f}(x)$ is given by:
-
-    .. math::
-        \hat{f}(x) = \frac{1}{n} \sum_{i=1}^{n} K(x, X_i, h)
-
-    where $K$ is the Beta density function with shape parameters dynamically
-    adjusted based on $x$ and $h$ to minimize bias at the edges (Chen type 2).
-
-    **Computational Complexity:**
-    Prediction (scoring) is $\mathcal{O}(N_{train} \cdot N_{test})$ because this is an exact
-    kernel method that does not use tree-based approximations. Performance may
-    degrade for datasets larger than $N=50,000$.
-
-    **Input Shape:**
-    This estimator strictly enforces 2D input `(n_samples, n_features)` to ensure
-    unambiguous behavior. For 1D arrays, you must use `X.reshape(-1, 1)`.
-
-    References
-    ----------
-    .. [1] Chen, S. X. (1999). Beta kernel estimators for density functions.
-           *Computational Statistics & Data Analysis*, 31(2), 131-145.
-    .. [2] Szabadváry, J. H. (2025). A Fast, Closed-Form Bandwidth Selector for
-           the Beta Kernel Density Estimator. *[Preprint/In Press]*.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from beta_kde.estimator import BetaKDE
-    >>> # Generate synthetic bounded data
-    >>> X = np.random.beta(2, 5, size=(100, 1))
-    >>> # Fit the model using the fast Reference Rule
-    >>> kde = BetaKDE(bounds=(0, 1), bandwidth='beta-reference')
-    >>> kde.fit(X)
-    >>> # Score new sample
-    >>> log_dens = kde.score_samples(np.array([[0.5]]))
+        Verbosity level.
     """
 
     VALID_SELECTION_METHODS = ["LCV", "LSCV", "beta-reference"]
@@ -163,7 +71,6 @@ class BetaKDE(DensityMixin, BaseEstimator):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.positive_only = self.bounds[0] >= 0
-        # Enforce 2D to match Scikit-learn's standard API expectation
         tags.input_tags.one_d_array = False
         tags.input_tags.two_d_array = True
         tags.target_tags.required = False
@@ -176,35 +83,25 @@ class BetaKDE(DensityMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data. Must be strictly 2D.
+            Training data.
         y : Ignored
-            Not used, present for API consistency by convention.
         compute_normalization : bool, default=False
-            If True, computes the normalization constant (integral of pdf)
-            immediately after fitting. Useful if you intend to call `pdf(normalized=True)`
-            frequently.
-
-        Returns
-        -------
-        self : object
-            Returns the instance itself.
+            If True, triggers the lazy calculation of the normalization constant
+            immediately. Useful for performance benchmarking or if you know
+            you will need normalized scores later.
         """
         # Reset attributes
         self.bandwidth_ = None
         self.is_fallback_ = None
+        # Reset normalization constant to None (invalidating previous fit)
         self.normalization_constant_ = None
 
-        # 1. Validate Input
-        # ensure_2d=True forces standard sklearn behavior (ValueError on 1D input).
         X = check_array(X, ensure_2d=True, order="C", dtype=np.float64)
 
         self.n_samples_, self.n_features_ = X.shape
         self.training_data_ = X
-
-        # REQUIRED for check_estimator compatibility
         self.n_features_in_ = self.n_features_
 
-        # Validate Bounds
         lower, upper = self.bounds
         if lower >= upper:
             raise ValueError(f"Bounds must be strictly increasing. Got {self.bounds}")
@@ -215,7 +112,6 @@ class BetaKDE(DensityMixin, BaseEstimator):
                 f"Found range [{X.min():.3f}, {X.max():.3f}]."
             )
 
-        # Validate Bandwidth Parameter
         if isinstance(self.bandwidth, (float, int)) and not isinstance(
             self.bandwidth, bool
         ):
@@ -227,7 +123,7 @@ class BetaKDE(DensityMixin, BaseEstimator):
                     f"Unknown bandwidth selection method: '{self.bandwidth}'"
                 )
 
-        # 2. Scale Data to [0, 1]
+        # Scale Data to [0, 1]
         self.scale_factor_ = upper - lower
         self.shift_ = lower
 
@@ -235,7 +131,7 @@ class BetaKDE(DensityMixin, BaseEstimator):
         self._epsilon = 1e-10
         self.data_clipped_ = np.clip(X_scaled, self._epsilon, 1.0 - self._epsilon)
 
-        # 3. Fit Marginals
+        # Fit Marginals
         self.marginal_bandwidths_ = []
         fallback_statuses = []
         self.cdf_grids_ = []
@@ -269,7 +165,6 @@ class BetaKDE(DensityMixin, BaseEstimator):
                 self.x_grids_.append(grid)
                 self.cdf_grids_.append(cdf)
 
-        # Legacy attribute for 1D convenience
         if self.n_features_ == 1:
             self.bandwidth_ = self.marginal_bandwidths_[0]
             self.is_fallback_ = fallback_statuses[0]
@@ -281,29 +176,35 @@ class BetaKDE(DensityMixin, BaseEstimator):
                 else:
                     print(f"Bandwidth selected by MISE rule: h = {self.bandwidth_:.4f}")
 
-        # 4. Copula Bandwidth (Scott's Rule for U-space)
+        # Copula Bandwidth
         if self.n_features_ > 1:
             self.U_train_ = self._transform_to_uniform(self.data_clipped_)
-            # Scott's Rule: n^(-1 / (d + 4))
             self.copula_bandwidth_ = self.n_samples_ ** (-1.0 / (self.n_features_ + 4))
 
             if self.verbose > 0:
                 print(f"Copula Bandwidth (Scott's Rule): {self.copula_bandwidth_:.4f}")
 
         self.is_fitted_ = True
-        self.normalization_constant_ = None
-
+        
+        # Trigger lazy computation if explicitly requested
         if compute_normalization:
-            self.get_normalization_constant()
+            _ = self.normalization_constant
 
         return self
 
+    @property
+    def normalization_constant(self) -> float:
+        """
+        The normalization constant of the density.
+        Computed lazily via numerical integration upon first access.
+        """
+        check_is_fitted(self)
+        if self.normalization_constant_ is None:
+            self.normalization_constant_ = self._compute_normalization_constant()
+        return self.normalization_constant_
+
     def _normalization_integrand(self, x_val, h, data_d):
-        """
-        Integrand helper method. This is a class method to allow pickling,
-        avoiding closure capture issues present in nested functions.
-        """
-        # Handle scalar input from quad
+        """Integrand helper method."""
         if np.ndim(x_val) == 0:
             x_val = np.array([x_val])
 
@@ -319,21 +220,12 @@ class BetaKDE(DensityMixin, BaseEstimator):
 
         return res if res.size > 1 else res.item()
 
-    def get_normalization_constant(self) -> float:
-        """
-        Computes and caches the normalization constant C = integral(f_hat(x) dx).
-        """
-        check_is_fitted(self)
-
-        if self.normalization_constant_ is not None:
-            return self.normalization_constant_
-
+    def _compute_normalization_constant(self) -> float:
+        """Internal worker to compute and cache the normalization constant."""
         marginal_constants = []
         for d in range(self.n_features_):
             h = self.marginal_bandwidths_[d]
             data_d = self.data_clipped_[:, d]
-
-            # Pass arguments explicitly to allow pickling
             integral, _ = scipy.integrate.quad(
                 self._normalization_integrand,
                 0,
@@ -343,11 +235,7 @@ class BetaKDE(DensityMixin, BaseEstimator):
                 limit=50,
             )
             marginal_constants.append(integral)
-
-        # Total constant is the product (Copula integrates to ~1)
-        total_constant = np.prod(marginal_constants)
-        self.normalization_constant_ = total_constant
-        return total_constant
+        return np.prod(marginal_constants)
 
     def score_samples(self, X, normalized: bool = False):
         """
@@ -356,19 +244,13 @@ class BetaKDE(DensityMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Data to score. Must be strictly 2D.
+            Data to score.
         normalized : bool, default=False
-            If True, subtracts log(normalization_constant) to ensure the
-            density integrates to 1.0.
-
-        Returns
-        -------
-        log_density : ndarray of shape (n_samples,)
-            Log-likelihood of each data point.
+            If True, ensures the density integrates to 1.0. 
+            This triggers numerical integration if not yet computed.
         """
         check_is_fitted(self)
 
-        # Enforce 2D to match fit behavior
         if np.ndim(X) == 0:
             X = np.array([[X]])
         X = check_array(X, ensure_2d=True, order="C", dtype=np.float64)
@@ -390,17 +272,15 @@ class BetaKDE(DensityMixin, BaseEstimator):
         n_test = X.shape[0]
         log_density = np.zeros(n_test)
 
-        # 1. Add Marginal Log-Likelihoods
+        # 1. Marginal Log-Likelihoods
         for d in range(self.n_features_):
             h = self.marginal_bandwidths_[d]
             train_d = self.data_clipped_[:, d]
-
             log_pdf_scaled = self._score_samples_1d(X_safe[:, d], train_d, h)
-            # Jacobian correction for scaling: log(pdf(x)) = log(pdf(z)) - log(scale)
             log_pdf = log_pdf_scaled - np.log(self.scale_factor_)
             log_density += log_pdf
 
-        # 2. Add Copula Log-Likelihood (If Multivariate)
+        # 2. Copula Log-Likelihood
         if self.n_features_ > 1:
             U_test = self._transform_to_uniform(X_safe)
             log_copula = self._score_copula(
@@ -408,15 +288,20 @@ class BetaKDE(DensityMixin, BaseEstimator):
             )
             log_density += log_copula
 
+        # 3. Normalization (Lazy)
         if normalized:
-            norm_const = self.get_normalization_constant()
-            log_density -= np.log(norm_const)
+            log_norm = np.log(self.normalization_constant)
+            log_density -= log_norm
 
         return log_density
 
     def score(self, X, y=None):
         """
         Compute the total log-likelihood under the model.
+        
+        **Note:** This method explicitly forces `normalized=True` to ensure
+        statistical validity when used in cross-validation (e.g., GridSearchCV).
+        To get raw scores, use `score_samples(X, normalized=False).sum()`.
 
         Parameters
         ----------
@@ -429,29 +314,16 @@ class BetaKDE(DensityMixin, BaseEstimator):
         score : float
             Total log-likelihood.
         """
-        return np.sum(self.score_samples(X))
+        return np.sum(self.score_samples(X, normalized=True))
 
     def pdf(self, X, normalized: bool = False):
         """
         Convenience method returning the probability density (exp(score_samples)).
-
-        Parameters
-        ----------
-        X : array-like or scalar
-            Data to score. Scalars are converted to 2D arrays internally.
-        normalized : bool, default=False
-            Whether to normalize the density.
-
-        Returns
-        -------
-        pdf : array-like or float
-            Probability density values.
         """
         is_scalar = np.ndim(X) == 0
         if is_scalar:
             X_arg = np.array([[X]])
         elif np.ndim(X) == 1:
-            # Convenience reshape for PDF method only
             X_arg = X.reshape(-1, 1)
         else:
             X_arg = X
@@ -475,30 +347,7 @@ class BetaKDE(DensityMixin, BaseEstimator):
     ) -> Union[Any, Tuple[Any, Any]]:
         """
         Plots the estimated Marginal Probability Density Functions (PDFs).
-
-        Parameters
-        ----------
-        eval_points : array-like, optional
-            Points at which to evaluate the PDF. If None, creates a grid of 1000 points.
-        show_histogram : bool, default=True
-            Whether to plot the histogram of training data underneath the curve.
-        bins : int, default=20
-            Number of bins for the histogram.
-        normalized : bool, default=False
-            Whether to normalize the PDF for plotting.
-        ax : matplotlib.axes.Axes, optional
-            Axes to plot on. If None, a new figure is created.
-        label : str, optional
-            Label for the plot legend.
-        **kwargs
-            Additional keyword arguments passed to `ax.plot`.
-
-        Returns
-        -------
-        ax : matplotlib.axes.Axes or array of Axes
-            The axes containing the plot.
         """
-        # Lazy import to avoid hard dependency on top-level
         import matplotlib.pyplot as plt
 
         check_is_fitted(self)
@@ -556,6 +405,9 @@ class BetaKDE(DensityMixin, BaseEstimator):
             log_pdf = log_pdf_scaled - np.log(self.scale_factor_)
             pdf_vals = np.exp(log_pdf)
 
+            # NOTE: For plotting, we use trapezoidal rule normalization.
+            # This is robust for multivariate marginals where the total
+            # normalization constant != marginal constant.
             if normalized:
                 integral = np.trapz(pdf_vals, x_plot)
                 if integral > 0:
@@ -734,8 +586,6 @@ class BetaKDE(DensityMixin, BaseEstimator):
                 raise ValueError("Calculated bandwidth outside (0, 1).")
 
         except (ValueError, RuntimeError) as e:
-            # Allow fallback if sample variance is zero ONLY if N=1 or we decide to support it.
-            # Currently strict on N>1 constant data to match tests.
             if ("Sample variance is zero" in str(e) or "too large" in str(e)) and len(
                 data
             ) > 1:
