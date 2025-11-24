@@ -8,7 +8,7 @@ from beta_kde.estimator import BetaKDE as NewKDE
 # --- Path Setup ---
 current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(current_dir, ".."))
-legacy_path = os.path.join(project_root, "paper_validation")
+legacy_path = os.path.join(current_dir, "legacy")
 
 if legacy_path not in sys.path:
     sys.path.insert(0, legacy_path)
