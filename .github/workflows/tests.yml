@@ -37,7 +37,7 @@ jobs:
       
       - name: Run tutorial notebook
         # Just ensure that the tutorial runs without issues
-        run: .scripts/run-notebooks
+        run: scripts/run-notebooks
 
       - name: Verify package build
         # Ensures the package can be built for distribution
