@@ -1,0 +1,19 @@
+#!/bin/bash
+#
+# This runs all notebooks in the notebooks folder
+# from the command line and generate HTMLs.
+#
+# This is intended to be run from CI.
+
+set -e
+
+# Print version info for debugging
+python3 -c "import matplotlib; print(f'Matplotlib Version: {matplotlib.__version__}')"
+
+for notebook in examples/*.ipynb
+do
+    echo PYTHONPATH=../src jupyter-nbconvert --execute $notebook --to html
+	PYTHONPATH=../src \
+	/usr/bin/time -f "%es  ($notebook)\n" \
+    jupyter-nbconvert --execute $notebook --to html
+done

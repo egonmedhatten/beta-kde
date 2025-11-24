@@ -34,6 +34,10 @@ jobs:
       - name: Run tests with pytest
         # This runs all tests in the 'tests/' folder
         run: pytest tests/ -v
+      
+      - name: Run tutorial notebook
+        # Just ensure that the tutorial runs without issues
+        run: .scripts/run-notebooks
 
       - name: Verify package build
         # Ensures the package can be built for distribution
