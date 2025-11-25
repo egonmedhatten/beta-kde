@@ -133,9 +133,9 @@ If your data represents percentages, probabilities, or physical constraints (e.g
 ### ⚠️ Important Usage Notes
 1. **Strict Input Shapes:** Input X must be 2D. Use X.reshape(-1, 1) for 1D arrays. This constraint prevents accidental application of univariate estimators to multivariate data.
 2. **Computational Complexity:** This is an exact kernel method.
-  * Raw density (normalized=False) is fast.
-  * Exact probabilities (normalized=True) require a one-time integration cost per fitted model.
-  * Recommended for datasets with $N < 50,000$.
+    * Raw density (normalized=False) is fast.
+    * Exact probabilities (normalized=True) require a one-time integration cost per fitted model.
+    * Recommended for datasets with $N < 50,000$.
 3. **Bounds:** You must specify bounds if your data is not in $[0, 1]$. The estimator handles scaling internally.
 
 ### 📚 References
