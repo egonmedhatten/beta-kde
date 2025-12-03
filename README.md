@@ -36,7 +36,7 @@ pip install beta-kde
 ```
 
 ## ⚡ Quick Start
-💡 **See the [Tutorial Notebook](examples/tutorial.ipynb) for detailed examples, including visualization and classification.**
+💡 **See the [Tutorial Notebook](https://github.com/egonmedhatten/beta-kde/blob/main/examples/tutorial.ipynb) for detailed examples, including visualization and classification.**
 1. Univariate Data (The Standard Case)
 BetaKDE enforces Scikit-learn's 2D input standard (n_samples, n_features).
 
