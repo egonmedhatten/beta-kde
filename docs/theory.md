@@ -1,5 +1,3 @@
-# TODO: Fix the citation. I have no paper to cite yet!
-
 # Mathematical Formulation
 
 `beta-kde` implements the **Beta Kernel Density Estimator** to solve the boundary leakage problem inherent in standard Gaussian KDEs when data is strictly bounded in $[0, 1]$.
