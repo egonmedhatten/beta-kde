@@ -35,3 +35,12 @@ nav:
   - Home: index.md
   - Theory: theory.md
   - API Reference: api.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/beta-kde/
+      name: PyPI
+    - icon: fontawesome/brands/github
+      link: https://github.com/egonmedhatten/beta-kde
+      name: GitHub

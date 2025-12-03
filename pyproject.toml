@@ -32,6 +32,8 @@ keywords = ["kernel-density-estimation", "kde", "beta-kernel", "bounded-data", "
 
 [project.urls]
 "Homepage" = "https://github.com/egonmedhatten/beta-kde"
+"Documentation" = "https://egonmedhatten.github.io/beta-kde/" 
+"Bug Tracker" = "https://github.com/egonmedhatten/beta-kde/issues"
 
 [project.optional-dependencies]
 dev = [
