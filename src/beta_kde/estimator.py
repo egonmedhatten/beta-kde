@@ -409,7 +409,7 @@ class BetaKDE(DensityMixin, BaseEstimator):
             # This is robust for multivariate marginals where the total
             # normalization constant != marginal constant.
             if normalized:
-                integral = np.trapz(pdf_vals, x_plot)
+                integral = np.trapezoid(pdf_vals, x_plot)
                 if integral > 0:
                     pdf_vals /= integral
 
