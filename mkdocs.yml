@@ -1,5 +1,5 @@
-site_name: beta-kde: Beta Kernel Density Estimation
-site_description: A Scikit-learn compatible Python package for Beta Kernel Density Estimation (KDE), providing fast, finite-sample boundary correction for bounded data.
+site_name: "beta-kde: Beta Kernel Density Estimation"
+site_description: "A Scikit-learn compatible Python package for Beta Kernel Density Estimation (KDE), providing fast, finite-sample boundary correction for bounded data."
 site_url: https://egonmedhatten.github.io/beta-kde/
 repo_url: https://github.com/egonmedhatten/beta-kde
 
