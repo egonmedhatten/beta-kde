@@ -103,11 +103,11 @@ bw.beta.rot <- function(x) {
 
 
 #--- Usage example ---
-set.seed(42)
-my_data <- rbeta(500, 2, 5)
-h_opt   <- bw.beta.rot(my_data)
-cat("Optimal bandwidth:", h_opt, "\n")
+# set.seed(42)
+# my_data <- rbeta(500, 2, 5)
+# h_opt   <- bw.beta.rot(my_data)
+# cat("Optimal bandwidth:", h_opt, "\n")
 
-library(kdensity)
-fit <- kdensity(my_data, kernel = "beta", bw = h_opt)
-plot(fit, main = "Beta KDE with Rule-of-Thumb Bandwidth")
+# library(kdensity)
+# fit <- kdensity(my_data, kernel = "beta", bw = h_opt)
+# plot(fit, main = "Beta KDE with Rule-of-Thumb Bandwidth")
