@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the accompanying paper."
+title: "beta-kde"
+authors:
+  - family-names: "Hallberg Szabadváry"
+    given-names: "Johan"
+type: software
+url: "https://github.com/egonmedhatten/beta-kde"
+repository-code: "https://github.com/egonmedhatten/beta-kde"
+license: BSD-3-Clause
+preferred-citation:
+  type: article
+  authors:
+    - family-names: "Hallberg Szabadváry"
+      given-names: "Johan"
+  title: "A Fast, Closed-Form Bandwidth Selector for the Beta Kernel Density Estimator"
+  journal: "Journal of Computational and Graphical Statistics"
+  year: 2026
+  doi: "10.1080/10618600.2026.2670662"

@@ -1,18 +1,18 @@
-# beta-kde: Boundary-Corrected Kernel Density Estimation
+# beta-kde: Beta Kernel Density Estimation in Python
 
 [![PyPI version](https://badge.fury.io/py/beta-kde.svg)](https://badge.fury.io/py/beta-kde)
 [![License](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 [![Tests](https://github.com/egonmedhatten/beta-kde/actions/workflows/tests.yml/badge.svg)](https://github.com/egonmedhatten/beta-kde/actions)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/egonmedhatten/beta-kde/HEAD?urlpath=%2Fdoc%2Ftree%2Fexamples%2Ftutorial.ipynb)
 
-**Fast, finite-sample boundary correction for data strictly bounded in [0, 1].**
+**A Scikit-learn compatible Python package for Beta Kernel Density Estimation (KDE), providing fast, finite-sample boundary correction for bounded data.**
 
-`beta-kde` is a Scikit-learn compatible library for Kernel Density Estimation (KDE) using the Beta kernel approach (Chen, 1999). It fixes the **Boundary Bias** problem inherent in standard Gaussian KDEs, where probability mass "leaks" past the edges of the data (e.g., below 0 or above 1).
+`beta-kde` fixes the **Boundary Bias** problem inherent in standard Gaussian KDEs, where probability mass "leaks" past the edges of the data (e.g., below 0 or above 1).
 
-<!-- This package is the official implementation of the paper:
+This package is the official implementation of the paper:
 > **A Fast, Closed-Form Bandwidth Selector for the Beta Kernel Density Estimator**
-> *Johan Hallberg Szabadváry (2025)*
-> Submitted to Journal of Computational and Graphical Statistics. -->
+> *Johan Hallberg Szabadváry (2026)*
+> *Journal of Computational and Graphical Statistics*. [DOI: 10.1080/10618600.2026.2670662](https://doi.org/10.1080/10618600.2026.2670662) | [arXiv preprint](https://doi.org/10.48550/arXiv.2601.19553)
 
 ## 📊 The Problem vs. The Solution
 
@@ -23,9 +23,7 @@ Standard KDEs smooth data blindly, ignoring bounds. `beta-kde` uses asymmetric B
 ## 🚀 Key Features
 
 * **Boundary Correction:** Zero leakage. Probability mass stays strictly within the defined bounds.
-* **Fast Bandwidth Selection:** Implements the **Beta Reference Rule**, a closed-form $\mathcal{O}(1)$ selector.
- <!-- proposed in Szabadváry (2025).  -->
-It matches the accuracy of expensive Cross-Validation but is **orders of magnitude faster**.
+* **Fast Bandwidth Selection:** Implements the **Beta Reference Rule**, a closed-form $\mathcal{O}(1)$ selector proposed in Hallberg Szabadváry (2026). It matches the accuracy of expensive Cross-Validation but is **orders of magnitude faster**.
 * **Multivariate Support:** Models multivariate bounded data using a **Non-Parametric Beta Copula**.
 * **Scikit-learn API:** Drop-in replacement for `KernelDensity`. Fully compatible with `GridSearchCV`, `Pipeline`, and `cross_val_score`.
 
@@ -37,7 +35,8 @@ pip install beta-kde
 
 ## ⚡ Quick Start
 💡 **See the [Tutorial Notebook](https://github.com/egonmedhatten/beta-kde/blob/main/examples/tutorial.ipynb) for detailed examples, including visualization and classification.**
-1. Univariate Data (The Standard Case)
+
+### 1. Univariate Data (The Standard Case)
 BetaKDE enforces Scikit-learn's 2D input standard (n_samples, n_features).
 
 ```python
@@ -65,9 +64,12 @@ log_density = kde.score_samples(np.array([[0.1], [0.5], [0.9]]), normalized=True
 fig, ax = kde.plot()
 plt.show()
 ```
-2. Multivariate Data (Copula)
+
+### 2. Multivariate Data (Copula)
 For multidimensional data, BetaKDE fits marginals independently and models dependence using a Copula.
+
 ![2D Copula Plot](https://raw.githubusercontent.com/egonmedhatten/beta-kde/main/assets/2d_copula.png)
+
 ```python
 # Generate correlated 2D data
 X_2d = np.random.rand(200, 2) 
@@ -83,6 +85,7 @@ scores = kde_multi.score_samples(X_2d)
 fig, ax = kde.plot()
 plt.show()
 ```
+
 ### 3. Scikit-learn Compatibility (e.g. Hyperparameter Tuning)
 `beta-kde` is a fully compliant Scikit-learn estimator. You can use it in Pipelines or with `GridSearchCV` to find the optimal bandwidth.
 
@@ -113,11 +116,11 @@ print(f"Best Log-Likelihood: {grid.best_score_:.4f}")
 
 ## ⚡ Performance & Normalization
 Unlike Gaussian KDEs, Beta KDEs do not integrate to 1.0 analytically. Normalization requires numerical integration, which can be computationally expensive. beta-kde handles this smartly:
-* **Lazy Loading:** fit(X) is fast and does not compute the normalization constant.
-* **On-Demand:** The integral is computed and cached only when you strictly need it (e.g., calling kde.score(X) or kde.pdf(X, normalized=True)).
+* **Lazy Loading:** `fit(X)` is fast and does not compute the normalization constant.
+* **On-Demand:** The integral is computed and cached only when you strictly need it (e.g., calling `kde.score(X)` or `kde.pdf(X, normalized=True)`).
 * **Flexible Scoring:**
-  * score_samples(X, normalized=False) (Default): Fast. Best for clustering, relative density comparisons, or plotting shape.
-  * score(X): Accurate. Always returns the normalized total log-likelihood. Safe for use in GridSearchCV.
+  * `score_samples(X, normalized=False)` (Default): Fast. Best for clustering, relative density comparisons, or plotting shape.
+  * `score(X)`: Accurate. Always returns the normalized total log-likelihood. Safe for use in `GridSearchCV`.
 
 ## 🆚 Why use beta-kde?
 If your data represents percentages, probabilities, or physical constraints (e.g., $x \in [0, 1]$), standard KDEs are mathematically incorrect at the edges.
@@ -131,26 +134,28 @@ If your data represents percentages, probabilities, or physical constraints (e.g
 | **Speed (Prediction)** | Fast (Tree-based) | Moderate (Exact summation) |
 
 ### ⚠️ Important Usage Notes
-1. **Strict Input Shapes:** Input X must be 2D. Use X.reshape(-1, 1) for 1D arrays. This constraint prevents accidental application of univariate estimators to multivariate data.
+1. **Strict Input Shapes:** Input `X` must be 2D. Use `X.reshape(-1, 1)` for 1D arrays. This constraint prevents accidental application of univariate estimators to multivariate data.
 2. **Computational Complexity:** This is an exact kernel method.
-    * Raw density (normalized=False) is fast.
-    * Exact probabilities (normalized=True) require a one-time integration cost per fitted model.
+    * Raw density (`normalized=False`) is fast.
+    * Exact probabilities (`normalized=True`) require a one-time integration cost per fitted model.
     * Recommended for datasets with $N < 50,000$.
 3. **Bounds:** You must specify bounds if your data is not in $[0, 1]$. The estimator handles scaling internally.
 
 ### 📚 References
 1. Chen, S. X. (1999). Beta kernel estimators for density functions. Computational Statistics & Data Analysis, 31(2), 131-145.
-<!-- 2. Szabadváry, J. H. (2025). A Fast, Closed-Form Bandwidth Selector for the Beta Kernel Density Estimator. Journal of Computational and Graphical Statistics (Submitted). -->
+2. Hallberg Szabadváry, J. (2026). A Fast, Closed-Form Bandwidth Selector for the Beta Kernel Density Estimator. *Journal of Computational and Graphical Statistics*. [DOI: 10.1080/10618600.2026.2670662](https://doi.org/10.1080/10618600.2026.2670662)
 
-<!-- ### Citation
-If you use this package in your research, please cite:
+### Citation
+If you use this package in your research, please cite the accompanying paper:
 ```bibtex
-@article{szabadvary2025beta,
-  title={A Fast, Closed-Form Bandwidth Selector for the Beta Kernel Density Estimator},
-  author={Szabadv{\'a}ry, Johan Hallberg},
-  journal={Preprint},
-  year={2025}
+@article{szabadvary2026fast,
+  author = {Hallberg Szabadv{\'a}ry, Johan},
+  title = {A Fast, Closed-Form Bandwidth Selector for the Beta Kernel Density Estimator},
+  journal = {Journal of Computational and Graphical Statistics},
+  year = {2026},
+  doi = {10.1080/10618600.2026.2670662}
 }
-``` -->
+```
+
 ### License
 BSD 3-Clause License
