@@ -141,6 +141,12 @@ If your data represents percentages, probabilities, or physical constraints (e.g
     * Recommended for datasets with $N < 50,000$.
 3. **Bounds:** You must specify bounds if your data is not in $[0, 1]$. The estimator handles scaling internally.
 
+## Other Implementations
+
+The Hallberg-Szabadváry bandwidth selector is also natively available in:
+* **R:** Implemented as the default selector for beta kernels in the CRAN package [`kdensity`](https://cran.r-project.org/web/packages/kdensity/index.html) (v1.2.0+). Use it by setting `bw = "HS"`.
+* **Julia:** Available in the [`BetaKDE.jl`](https://github.com/egonmedhatten/BetaKDE.jl) package.
+
 ### 📚 References
 1. Chen, S. X. (1999). Beta kernel estimators for density functions. Computational Statistics & Data Analysis, 31(2), 131-145.
 2. Hallberg Szabadváry, J. (2026). A Fast, Closed-Form Bandwidth Selector for the Beta Kernel Density Estimator. *Journal of Computational and Graphical Statistics*. [DOI: 10.1080/10618600.2026.2670662](https://doi.org/10.1080/10618600.2026.2670662)
