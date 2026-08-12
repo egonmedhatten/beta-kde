@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.10", "3.11", "3.12"]
 
     steps:
       - name: Checkout code
@@ -33,11 +33,11 @@ jobs:
 
       - name: Run tests with pytest
         # This runs all tests in the 'tests/' folder
-        run: pytest tests/ -v
+        run: pytest tests/ -v --ignore=tests/test_leancheck.py
 
       - name: Run LeanCheck tests
-        # env:
-        #   LEANCHECK_TEST_COUNT: 1000
+        env:
+          LEANCHECK_TEST_COUNT: 1000
         run: |
           python tests/test_leancheck.py
       
