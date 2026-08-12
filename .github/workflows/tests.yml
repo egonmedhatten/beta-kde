@@ -2,9 +2,7 @@ name: test
 
 on:
   push:
-    branches: [ "**" ]
-    paths-ignore:
-      - gh-pages
+    branches: [ main, leancheck ]
   pull_request:
     branches: [ main ]
 
