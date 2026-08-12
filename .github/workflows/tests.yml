@@ -34,6 +34,12 @@ jobs:
       - name: Run tests with pytest
         # This runs all tests in the 'tests/' folder
         run: pytest tests/ -v
+
+      - name: Run LeanCheck tests
+        env:
+          LEANCHECK_TEST_COUNT: 1000
+        run: |
+          python tests/test_leancheck.py
       
       - name: Run tutorial notebook
         # Just ensure that the tutorial runs without issues

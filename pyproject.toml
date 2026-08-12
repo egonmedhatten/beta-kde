@@ -42,7 +42,8 @@ dev = [
     "black",
     "ruff",
     "build",
-    "twine"
+    "twine",
+    "leancheck"
 ]
 
 [tool.setuptools.packages.find]
