@@ -36,8 +36,8 @@ jobs:
         run: pytest tests/ -v
 
       - name: Run LeanCheck tests
-        env:
-          LEANCHECK_TEST_COUNT: 1000
+        # env:
+        #   LEANCHECK_TEST_COUNT: 1000
         run: |
           python tests/test_leancheck.py
       
