@@ -55,3 +55,12 @@ where = ["src"]
 addopts = "--cov=src/beta_kde --cov-report=term-missing"
 testpaths = ["tests"]
 
+[tool.ruff.lint]
+# Ignore certain rules that are too strict for this codebase
+ignore = [
+    "BLE001",  # Blind except: catch exceptions - intentional in tests
+    "RUF012",  # Mutable default value for class attribute - intentional constant
+    "SIM102",  # Nested if statements - intentional for readability
+    "F841",    # Local variable assigned but never used - can be intentional
+]
+

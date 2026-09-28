@@ -1,6 +1,7 @@
 import time
+
 import numpy as np
-import pytest
+
 from beta_kde.estimator import BetaKDE
 
 

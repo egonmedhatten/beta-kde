@@ -1,18 +1,19 @@
-import numpy as np
-import pytest
-import matplotlib.pyplot as plt
-from scipy.integrate import quad
-from numpy.testing import assert_allclose
-from beta_kde.estimator import BetaKDE
-from beta_kde import BetaKDE as BetaKDEClass
-from sklearn.exceptions import NotFittedError
-from sklearn.utils.estimator_checks import check_estimator
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
+import os
 
 # Import BetaKDEClassifier from examples
 import sys
-import os
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pytest
+from numpy.testing import assert_allclose
+from scipy.integrate import quad
+from sklearn.exceptions import NotFittedError
+from sklearn.model_selection import train_test_split
+from sklearn.utils.estimator_checks import check_estimator
+
+from beta_kde.estimator import BetaKDE
+
 examples_path = os.path.join(os.path.dirname(__file__), '..', 'examples')
 sys.path.insert(0, examples_path)
 from generative_classifier import BetaKDEClassifier
@@ -349,7 +350,7 @@ def test_plot_method(simple_data):
 
     # Smoke test for plotting
     try:
-        fig, ax = kde.plot(show_histogram=True)
+        fig, _ax = kde.plot(show_histogram=True)
         plt.close(fig)
     except Exception as e:
         pytest.fail(f"Plotting failed: {e}")
@@ -791,7 +792,7 @@ def test_boundary_bias_reduction():
     # BetaKDE should give reasonable density near boundaries
     # (Gaussian KDE often underestimates near boundaries due to bias)
     beta_dens = np.exp(beta_log_dens)
-    gaussian_dens = np.exp(gaussian_log_dens)
+    np.exp(gaussian_log_dens)
     
     # BetaKDE densities should be positive everywhere (no negative values)
     assert np.all(beta_dens > 0), "BetaKDE densities should be positive"

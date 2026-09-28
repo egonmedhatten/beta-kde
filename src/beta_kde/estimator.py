@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import warnings
-from typing import Any, Optional, Tuple, Union, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import scipy.integrate
@@ -12,7 +12,6 @@ from sklearn.base import BaseEstimator, DensityMixin
 from sklearn.utils.validation import check_array, check_is_fitted
 
 if TYPE_CHECKING:
-    import matplotlib.pyplot
     from numpy.typing import ArrayLike
 
 
@@ -56,9 +55,9 @@ class BetaKDE(DensityMixin, BaseEstimator):
 
     def __init__(
         self,
-        bandwidth: Optional[Union[float, str]] = None,
-        bounds: Tuple[float, float] = (0.0, 1.0),
-        bandwidth_bounds: Tuple[float, float] = (0.01, 0.2),
+        bandwidth: float | str | None = None,
+        bounds: tuple[float, float] = (0.0, 1.0),
+        bandwidth_bounds: tuple[float, float] = (0.01, 0.2),
         selection_grid_points: int = 30,
         heuristic_factor: float = 4.0,
         integration_points: int = 200,
@@ -95,10 +94,10 @@ class BetaKDE(DensityMixin, BaseEstimator):
     marginal_bandwidths_: list[float]
     x_grids_: list[np.ndarray]
     cdf_grids_: list[np.ndarray]
-    bandwidth_: Optional[float]
-    is_fallback_: Optional[bool]
-    copula_bandwidth_: Optional[float]
-    normalization_constant_: Optional[float]
+    bandwidth_: float | None
+    is_fallback_: bool | None
+    copula_bandwidth_: float | None
+    normalization_constant_: float | None
     is_fitted_: bool
 
     def fit(
@@ -390,7 +389,7 @@ class BetaKDE(DensityMixin, BaseEstimator):
         """
         return np.sum(self.score_samples(X, normalized=True))
 
-    def pdf(self, X: ArrayLike, normalized: bool = False) -> Union[float, np.ndarray]:
+    def pdf(self, X: ArrayLike, normalized: bool = False) -> float | np.ndarray:
         """
         Convenience method returning the probability density (exp(score_samples)).
 
@@ -423,14 +422,14 @@ class BetaKDE(DensityMixin, BaseEstimator):
 
     def plot(
         self,
-        eval_points: Optional[np.ndarray] = None,
+        eval_points: np.ndarray | None = None,
         show_histogram: bool = True,
         bins: int = 20,
         normalized: bool = False,
-        ax: Optional[Any] = None,
-        label: Optional[str] = None,
+        ax: Any | None = None,
+        label: str | None = None,
         **kwargs: Any,
-    ) -> Union[Any, Tuple[Any, Any]]:
+    ) -> Any | tuple[Any, Any]:
         """
         Plots the estimated Marginal Probability Density Functions (PDFs).
         """
@@ -675,7 +674,7 @@ class BetaKDE(DensityMixin, BaseEstimator):
             if ("Sample variance is zero" in str(e) or "too large" in str(e)) and len(
                 data
             ) > 1:
-                raise e
+                raise
 
             if not (hasattr(self, "ahat_") and hasattr(self, "bhat_")):
                 try:
@@ -688,7 +687,7 @@ class BetaKDE(DensityMixin, BaseEstimator):
                 warnings.warn(f"MISE Rule failed: {e}. Using fallback.", RuntimeWarning)
         return h_final, is_fallback
 
-    def _estimate_beta_params(self, X_filtered: np.ndarray) -> Tuple[float, float]:
+    def _estimate_beta_params(self, X_filtered: np.ndarray) -> tuple[float, float]:
         if X_filtered.size == 0:
             raise ValueError(
                 "No data strictly within (0, 1). "

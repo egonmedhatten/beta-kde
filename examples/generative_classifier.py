@@ -12,22 +12,22 @@ This approach has several advantages:
 3. It supports multivariate data via the Beta Copula.
 """
 
-import sys
 import os
+import sys
 
 # Add the ../src directory to Python's path
 current_dir = os.path.dirname(os.path.abspath(__file__))
 src_path = os.path.join(current_dir, "..", "src")
 sys.path.insert(0, src_path)
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.datasets import make_moons
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
 
 from beta_kde import BetaKDE
+
 
 class BetaKDEClassifier(BaseEstimator, ClassifierMixin):
     """

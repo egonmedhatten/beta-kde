@@ -5,10 +5,10 @@ excluding expected failure cases as per LeanCheck best practices.
 """
 
 import numpy as np
+from leancheck import check
 from scipy.integrate import quad
 
 from beta_kde.estimator import BetaKDE
-from leancheck import check
 
 
 def prop_univariate_normalization(bounds_lower: float, bounds_upper: float, 

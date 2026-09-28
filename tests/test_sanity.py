@@ -1,8 +1,10 @@
-import sys
 import os
+import sys
+
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose
+
 from beta_kde.estimator import BetaKDE as NewKDE
 
 # --- Path Setup ---
