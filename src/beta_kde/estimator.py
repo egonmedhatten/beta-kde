@@ -82,6 +82,25 @@ class BetaKDE(DensityMixin, BaseEstimator):
         tags.target_tags.required = False
         return tags
 
+    # --- Class attributes (type hints for mypy) ---
+    # Attributes set after fitting
+    n_samples_: int
+    n_features_: int
+    n_features_in_: int
+    training_data_: np.ndarray
+    scale_factor_: float
+    shift_: float
+    _epsilon: float
+    data_clipped_: np.ndarray
+    marginal_bandwidths_: list[float]
+    x_grids_: list[np.ndarray]
+    cdf_grids_: list[np.ndarray]
+    bandwidth_: Optional[float]
+    is_fallback_: Optional[bool]
+    copula_bandwidth_: Optional[float]
+    normalization_constant_: Optional[float]
+    is_fitted_: bool
+
     def fit(
         self,
         X: ArrayLike,
@@ -176,7 +195,7 @@ class BetaKDE(DensityMixin, BaseEstimator):
                 grid = np.linspace(0, 1, self.copula_grid_size)
                 log_pdf = self._score_samples_1d(grid, data_d, h)
                 pdf = np.exp(log_pdf)
-                cdf = np.cumsum(pdf)
+                cdf: np.ndarray = np.cumsum(pdf)  # Type annotation for mypy
                 cdf = cdf / cdf[-1]  # Normalize
                 self.x_grids_.append(grid)
                 self.cdf_grids_.append(cdf)
@@ -404,7 +423,7 @@ class BetaKDE(DensityMixin, BaseEstimator):
 
     def plot(
         self,
-        eval_points: np.ndarray = None,
+        eval_points: Optional[np.ndarray] = None,
         show_histogram: bool = True,
         bins: int = 20,
         normalized: bool = False,
