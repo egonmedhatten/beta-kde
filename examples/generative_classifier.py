@@ -83,7 +83,12 @@ class BetaKDEClassifier(BaseEstimator, ClassifierMixin):
             log_posterior = log_likelihood + log_prior
             log_probs.append(log_posterior)
         
-        return np.array(log_probs).T
+        # Stack and normalize using logsumexp for numerical stability
+        log_probs_array = np.array(log_probs).T
+        log_sum_exp = np.logaddexp.reduce(log_probs_array, axis=1, keepdims=True)
+        normalized_log_probs = log_probs_array - log_sum_exp
+        
+        return normalized_log_probs
 
     def predict(self, X):
         """Predict the class label with the highest posterior probability."""

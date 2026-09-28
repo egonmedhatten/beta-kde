@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import warnings
-from typing import Any, Optional, Tuple, Union
+from typing import Any, Optional, Tuple, Union, TYPE_CHECKING
 
 import numpy as np
 import scipy.integrate
@@ -8,6 +10,10 @@ import scipy.special as sp
 from scipy.stats import beta as beta_dist
 from sklearn.base import BaseEstimator, DensityMixin
 from sklearn.utils.validation import check_array, check_is_fitted
+
+if TYPE_CHECKING:
+    import matplotlib.pyplot
+    from numpy.typing import ArrayLike
 
 
 class BetaKDE(DensityMixin, BaseEstimator):
@@ -76,7 +82,12 @@ class BetaKDE(DensityMixin, BaseEstimator):
         tags.target_tags.required = False
         return tags
 
-    def fit(self, X, y=None, compute_normalization: bool = False):
+    def fit(
+        self,
+        X: ArrayLike,
+        y: Any = None,
+        compute_normalization: bool = False,
+    ) -> BetaKDE:
         """
         Fit the Beta Kernel Density model to the training data.
 
@@ -89,6 +100,11 @@ class BetaKDE(DensityMixin, BaseEstimator):
             If True, triggers the lazy calculation of the normalization constant
             immediately. Useful for performance benchmarking or if you know
             you will need normalized scores later.
+
+        Returns
+        -------
+        self : BetaKDE
+            Fitted estimator.
         """
         # Reset attributes
         self.bandwidth_ = None
@@ -222,10 +238,26 @@ class BetaKDE(DensityMixin, BaseEstimator):
 
     def _compute_normalization_constant(self) -> float:
         """Internal worker to compute and cache the normalization constant."""
+        if self.n_samples_ < 2:
+            raise ValueError(
+                f"Cannot compute normalization constant with only {self.n_samples_} sample(s). "
+                "At least 2 samples are required for numerical integration. "
+                "Use score_samples(normalized=False) for unnormalized densities."
+            )
+        
         marginal_constants = []
         for d in range(self.n_features_):
             h = self.marginal_bandwidths_[d]
             data_d = self.data_clipped_[:, d]
+            
+            # Check for constant data in this dimension
+            if np.std(data_d) < 1e-10:
+                raise ValueError(
+                    f"Dimension {d+1} has constant data (std < 1e-10). "
+                    f"Cannot compute normalization constant for constant data. "
+                    f"Use score_samples(normalized=False) instead."
+                )
+            
             integral, _ = scipy.integrate.quad(
                 self._normalization_integrand,
                 0,
@@ -234,10 +266,28 @@ class BetaKDE(DensityMixin, BaseEstimator):
                 epsabs=1e-4,
                 limit=50,
             )
+            
+            if not np.isfinite(integral) or integral <= 0:
+                raise RuntimeError(
+                    f"Dimension {d+1}: Integration failed with result={integral}. "
+                    f"Bandwidth: h={h:.6f}. "
+                    "This may be due to numerical issues or extreme parameter values. "
+                    "Try using a different bandwidth method or fewer dimensions."
+                )
+            
             marginal_constants.append(integral)
-        return np.prod(marginal_constants)
+        
+        result = np.prod(marginal_constants)
+        if not np.isfinite(result) or result <= 0:
+            raise RuntimeError(
+                f"Normalization constant computation failed: result={result}. "
+                "This may be due to numerical issues with the integration. "
+                "Try using a different bandwidth method or fewer dimensions."
+            )
+        
+        return result
 
-    def score_samples(self, X, normalized: bool = False):
+    def score_samples(self, X: ArrayLike, normalized: bool = False) -> np.ndarray:
         """
         Compute the log-likelihood of each sample.
 
@@ -248,6 +298,11 @@ class BetaKDE(DensityMixin, BaseEstimator):
         normalized : bool, default=False
             If True, ensures the density integrates to 1.0. 
             This triggers numerical integration if not yet computed.
+
+        Returns
+        -------
+        log_density : ndarray of shape (n_samples,)
+            Log-likelihood of each sample.
         """
         check_is_fitted(self)
 
@@ -295,7 +350,7 @@ class BetaKDE(DensityMixin, BaseEstimator):
 
         return log_density
 
-    def score(self, X, y=None):
+    def score(self, X: ArrayLike, y: Any = None) -> float:
         """
         Compute the total log-likelihood under the model.
         
@@ -316,9 +371,21 @@ class BetaKDE(DensityMixin, BaseEstimator):
         """
         return np.sum(self.score_samples(X, normalized=True))
 
-    def pdf(self, X, normalized: bool = False):
+    def pdf(self, X: ArrayLike, normalized: bool = False) -> Union[float, np.ndarray]:
         """
         Convenience method returning the probability density (exp(score_samples)).
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Data to evaluate.
+        normalized : bool, default=False
+            If True, ensures the density integrates to 1.0.
+
+        Returns
+        -------
+        pdf : float or ndarray of shape (n_samples,)
+            Probability density values.
         """
         is_scalar = np.ndim(X) == 0
         if is_scalar:
@@ -602,21 +669,44 @@ class BetaKDE(DensityMixin, BaseEstimator):
                 warnings.warn(f"MISE Rule failed: {e}. Using fallback.", RuntimeWarning)
         return h_final, is_fallback
 
-    def _estimate_beta_params(self, X_filtered):
+    def _estimate_beta_params(self, X_filtered: np.ndarray) -> Tuple[float, float]:
         if X_filtered.size == 0:
-            raise ValueError("No data strictly within (0, 1).")
+            raise ValueError(
+                "No data strictly within (0, 1). "
+                "Beta kernel bandwidth selection requires at least some data "
+                "points strictly inside the open interval (0, 1). "
+                "Try clipping your data or using a different bandwidth method."
+            )
         mean_x = np.mean(X_filtered)
         var_x = np.var(X_filtered, ddof=0)
 
         if var_x == 0:
-            raise ValueError("Sample variance is zero.")
-        if var_x >= mean_x * (1 - mean_x):
-            raise ValueError("Sample variance is too large for Beta parameters.")
+            raise ValueError(
+                f"Sample variance is zero. "
+                f"All {len(X_filtered)} data points have the same value: {X_filtered[0]:.6f}. "
+                "Cannot estimate Beta parameters from constant data. "
+                "Try using a fixed bandwidth value instead."
+            )
+        
+        max_var = mean_x * (1 - mean_x)
+        if var_x >= max_var:
+            raise ValueError(
+                f"Sample variance ({var_x:.6f}) exceeds the maximum possible "
+                f"for Beta distribution with mean {mean_x:.6f}. "
+                f"Maximum allowed variance: {max_var:.6f}. "
+                "This typically occurs when data is concentrated at boundaries. "
+                "Consider using the 'fallback' bandwidth method."
+            )
 
         common = ((mean_x * (1 - mean_x)) / var_x) - 1
         a, b = mean_x * common, (1 - mean_x) * common
         if a <= 0 or b <= 0:
-            raise ValueError(f"Estimated parameters not positive: a={a}, b={b}")
+            raise ValueError(
+                f"Estimated Beta parameters are not positive: a={a:.6f}, b={b:.6f}. "
+                f"Mean: {mean_x:.6f}, Variance: {var_x:.6f}. "
+                "This indicates numerical instability in parameter estimation. "
+                "Try using a different bandwidth method or increasing your dataset."
+            )
         self.ahat_, self.bhat_ = a, b
         return a, b
 
